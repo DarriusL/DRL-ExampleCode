@@ -1,0 +1,17 @@
+{
+    "agent_cfg":{
+        "algorithm_cfg":{
+            "name":"reinforce",
+            "gamma":0.99
+
+        },
+        "net_cfg":{
+            "name":"MLPNet",
+            "hid_layers":[16, 16, 16, 16],
+            "hid_layers_activation":"Selu"
+        }
+    },
+    "env":{
+
+    }
+}

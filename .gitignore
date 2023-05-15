@@ -1,0 +1,12 @@
+# IDEs
+.vscode
+
+# Python
+*.ipynb
+*.pyc
+*.log
+
+#Data
+saved/
+cache/
+__pycache__/
