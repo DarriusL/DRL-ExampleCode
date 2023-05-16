@@ -9,9 +9,9 @@ import torch
 import numpy as np
 
 class Reinforce(Algorithm):
+    '''Implementation of REINFORCE
     '''
-    '''
-    def __init__(self, algorithm_cfg, net_cfg, in_dim, out_dim) -> None:
+    def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #reset algorithm
         self.reset();
@@ -77,7 +77,8 @@ class Reinforce(Algorithm):
 
 
     def cal_loss(self, action_batch_logits, batch):
-        ''''''
+        '''Calculate policy gradient loss for REINFORCE
+        '''
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[T]
         log_probs = action_pd_batch.log_prob(batch['actions']);
@@ -85,11 +86,25 @@ class Reinforce(Algorithm):
         #Add baselines to returns
         if self.rets_mean_baseline:
             rets = alg_util.rets_mean_baseline(rets);
-        #[T]
-        loss = rets * log_probs;
+        loss = - (rets * log_probs).mean();
         return loss
     
     def train(self, batch):
-        batch = self.batch_to_tensor(batch);
-        #[T, out_dim]
-        action_batch_logits = self.cal_action_pd_batch(batch);
+        if self.to_train:
+            batch = self.batch_to_tensor(batch);
+            #[T, out_dim]
+            action_batch_logits = self.cal_action_pd_batch(batch);
+            loss = self.cal_loss(action_batch_logits, batch);
+            if self.lr_schedule is not None:
+                self.lr_schedule.step();
+            if hasattr(torch.cuda, 'empty_cache'):
+                torch.cuda.empty_cache();
+            self.optimizer.zero_grad();
+            self._check_nan(loss);
+            loss.backward();
+            self.optimizer.step();
+            if hasattr(torch.cuda, 'empty_cache'):
+                torch.cuda.empty_cache();
+            return loss.item();
+        else:
+            return None
