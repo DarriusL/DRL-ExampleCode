@@ -14,7 +14,7 @@ def get_net(net_cfg, in_dim, out_dim):
         if net_cfg['name'].lower() == 'mlpnet':
             return MLPNet(net_cfg, in_dim, out_dim);
         else:
-            glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.')
+            glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             callback.CustomException('NetCfgTypeError');
 
 def get_activation_fn(name = 'selu'):

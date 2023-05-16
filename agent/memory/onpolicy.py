@@ -36,6 +36,7 @@ class OnPolicyMemory(Memory):
         self.exp_latest = (state, action, reward, next_state, done);
         for idx, key in enumerate(self.exp_keys):
             self.cur_exp[key].append(self.exp_latest[idx]);
+        
         self.stock += 1;
         if done:
             for key in self.exp_keys:
