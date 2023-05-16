@@ -7,6 +7,17 @@ from agent import net
 from agent.net import *
 
 def get_net(net_cfg, in_dim, out_dim):
+    '''
+    Obtain the corresponding network according to the configuration
+
+    Parameters:
+    ----------
+    net_cfg:dict
+
+    in_dim
+
+    out_dim
+    '''
     try:
         NetClass = getattr(net, net_cfg['name']);
         return NetClass(net_cfg, in_dim, out_dim);
@@ -15,7 +26,32 @@ def get_net(net_cfg, in_dim, out_dim):
             return MLPNet(net_cfg, in_dim, out_dim);
         else:
             glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
-            callback.CustomException('NetCfgTypeError');
+            raise callback.CustomException('NetCfgTypeError');
+
+def get_optimizer(optim_cfg, net):
+    '''
+    Get Network Parameter Optimizer
+    '''
+    if optim_cfg['name'].lower() == 'adam':
+        return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
+    elif optim_cfg['name'].lower() == 'adamw':
+        return torch.optim.AdamW(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
+    else:
+        glb_var.get_value('logger').warning(f"Unrecognized optimizer[{optim_cfg['name']}], set default Adam optimizer");
+        return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr']);
+
+def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
+    '''Get the learning rate scheduler'''
+    if lr_schedule_cfg['name'].lower() == 'onecyclelr':
+        return torch.optim.lr_scheduler.OneCycleLR(
+            optimizer = optimizer, 
+            max_lr = lr_schedule_cfg['lr_max'],
+            total_steps = max_epoch);
+    elif lr_schedule_cfg is None:
+        return None;
+    else:
+        glb_var.get_value('logger').error(f'Type of schedule [{lr_schedule_cfg["name"]} is not supported.]');
+        raise callback.CustomException('LrScheduleError')
 
 def get_activation_fn(name = 'selu'):
     '''
@@ -45,4 +81,4 @@ def get_activation_fn(name = 'selu'):
     else:
         glb_var.get_value('logger').error(f'Activation function [{name.lower()}] does not support automatic acquisition at the moment,'
                                         f'please replace or add the code yourself.\nSupport list:{activations}');
-        callback.CustomException('ActivationCfgNameError');
+        raise callback.CustomException('ActivationCfgNameError');

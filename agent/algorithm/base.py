@@ -7,6 +7,10 @@ class Algorithm():
     '''Abstract Memory class to define the API methods'''
     def __init__(self, algorithm_cfg) -> None:
         util.set_attr(self, algorithm_cfg);
+
+    def _init_net(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
     
     def cal_action_pd(self):
         '''Calculating Action Distribution Parameters'''

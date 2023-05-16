@@ -2,18 +2,33 @@
     "agent_cfg":{
         "algorithm_cfg":{
             "name":"reinforce",
-            "gamma":0.99
-
+            "gamma":0.99,
+            "rets_mean_baseline":true
         },
         "net_cfg":{
             "name":"MLPNet",
             "hid_layers":[16, 16, 16, 16],
             "hid_layers_activation":"Selu"
         },
+        "optimizer_cfg":{
+            "name":"Adam",
+            "lr":1e-2,
+            "learning_rate": 1e-06,
+            "weight_decay": 1e-08,
+            "betas": [
+                0.9,
+                0.999
+            ]
+        },
+        "lr_schedule_cfg":{
+            "name":"OneCycleLR",
+            "lr_max":1e-2
+        },
         "memory_cfg":{
             "name":"OnPolicy"
         },
-        "train_exp_size":1
+        "train_exp_size":1,
+        "max_epoch":1000
     },
     "env":{
 

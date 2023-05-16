@@ -4,7 +4,7 @@
 import torch
 from agent.net.base import Net
 from agent.net import net_util
-from lib import util
+from lib import glb_var
 
 class MLPNet(Net):
     '''
@@ -21,6 +21,7 @@ class MLPNet(Net):
         if len(self.hid_layers) > 1:
             layers = [
                 torch.nn.Linear(in_dim, self.hid_layers[0]),
+                torch.nn.Dropout(glb_var.get_value('dropout_rate')),
                 activation_fn] + [
                 torch.nn.Linear(self.hid_layers[i], self.hid_layers[i+1]) for i in range(len(self.hid_layers) - 1)] + [
                 activation_fn,
@@ -30,6 +31,7 @@ class MLPNet(Net):
             #len(.)==1
             layers = [
                 torch.nn.Linear(in_dim, self.hid_layers[0]),
+                torch.nn.Dropout(glb_var.get_value('dropout_rate')),
                 activation_fn,
                 torch.nn.Linear(self.hid_layers[0], out_dim)
             ]
