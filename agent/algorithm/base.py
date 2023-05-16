@@ -9,7 +9,7 @@ class Algorithm():
     def __init__(self, algorithm_cfg) -> None:
         util.set_attr(self, algorithm_cfg);
 
-    def _init_net(self):
+    def init_net(self):
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 

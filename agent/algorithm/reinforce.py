@@ -17,15 +17,14 @@ class Reinforce(Algorithm):
         self.reset();
         #label for onpolicy algorithm
         self.is_onpolicy = True;
-        self.to_train = False;
 
-    def _init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
         self.pi = net_util.get_net(net_cfg, in_dim, out_dim);
         self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
         #if None, then do not use
-        self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer);
+        self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
 
     def batch_to_tensor(self, batch):
         '''Convert a batch to a format for torch training'''
@@ -87,24 +86,28 @@ class Reinforce(Algorithm):
         if self.rets_mean_baseline:
             rets = alg_util.rets_mean_baseline(rets);
         loss = - (rets * log_probs).mean();
-        return loss
+        return loss, rets.mean().item()
     
-    def train(self, batch):
-        if self.to_train:
-            batch = self.batch_to_tensor(batch);
-            #[T, out_dim]
-            action_batch_logits = self.cal_action_pd_batch(batch);
-            loss = self.cal_loss(action_batch_logits, batch);
-            if self.lr_schedule is not None:
-                self.lr_schedule.step();
-            if hasattr(torch.cuda, 'empty_cache'):
-                torch.cuda.empty_cache();
-            self.optimizer.zero_grad();
-            self._check_nan(loss);
-            loss.backward();
-            self.optimizer.step();
-            if hasattr(torch.cuda, 'empty_cache'):
-                torch.cuda.empty_cache();
-            return loss.item();
-        else:
-            return None
+    def train_epoch(self, batch):
+        '''training network
+
+        Parameters:
+        -----------
+        batch:dict
+            raw data in memory
+        '''
+        batch = self.batch_to_tensor(batch);
+        #[T, out_dim]
+        action_batch_logits = self.cal_action_pd_batch(batch);
+        loss, rets_mean = self.cal_loss(action_batch_logits, batch);
+        if self.lr_schedule is not None:
+            self.lr_schedule.step();
+        if hasattr(torch.cuda, 'empty_cache'):
+            torch.cuda.empty_cache();
+        self.optimizer.zero_grad();
+        self._check_nan(loss);
+        loss.backward();
+        self.optimizer.step();
+        if hasattr(torch.cuda, 'empty_cache'):
+            torch.cuda.empty_cache();
+        return loss.item(), rets_mean;
