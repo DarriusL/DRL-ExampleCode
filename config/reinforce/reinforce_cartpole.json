@@ -9,7 +9,11 @@
             "name":"MLPNet",
             "hid_layers":[16, 16, 16, 16],
             "hid_layers_activation":"Selu"
-        }
+        },
+        "memory_cfg":{
+            "name":"OnPolicy"
+        },
+        "train_exp_size":1
     },
     "env":{
 

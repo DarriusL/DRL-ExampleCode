@@ -3,10 +3,19 @@
 # @Email  : darrius.lei@outlook.com
 import torch
 from lib import callback, glb_var
+from agent import net
 from agent.net import *
 
-def get_net():
-    pass
+def get_net(net_cfg, in_dim, out_dim):
+    try:
+        NetClass = getattr(net, net_cfg['name']);
+        return NetClass(net_cfg, in_dim, out_dim);
+    except:
+        if net_cfg['name'].lower() == 'mlpnet':
+            return MLPNet(net_cfg, in_dim, out_dim);
+        else:
+            glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.')
+            callback.CustomException('NetCfgTypeError');
 
 def get_activation_fn(name = 'selu'):
     '''
