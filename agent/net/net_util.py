@@ -6,28 +6,6 @@ from lib import callback, glb_var
 from agent import net
 from agent.net import *
 
-def get_net(net_cfg, in_dim, out_dim):
-    '''
-    Obtain the corresponding network according to the configuration
-
-    Parameters:
-    ----------
-    net_cfg:dict
-
-    in_dim
-
-    out_dim
-    '''
-    try:
-        NetClass = getattr(net, net_cfg['name']);
-        return NetClass(net_cfg, in_dim, out_dim);
-    except:
-        if net_cfg['name'].lower() == 'mlpnet':
-            return MLPNet(net_cfg, in_dim, out_dim);
-        else:
-            glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
-            raise callback.CustomException('NetCfgTypeError');
-
 def get_optimizer(optim_cfg, net):
     '''
     Get Network Parameter Optimizer
@@ -42,13 +20,13 @@ def get_optimizer(optim_cfg, net):
 
 def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
     '''Get the learning rate scheduler'''
-    if lr_schedule_cfg['name'].lower() == 'onecyclelr':
+    if lr_schedule_cfg is None:
+        return None;
+    elif lr_schedule_cfg['name'].lower() == 'onecyclelr':
         return torch.optim.lr_scheduler.OneCycleLR(
             optimizer = optimizer, 
             max_lr = lr_schedule_cfg['lr_max'],
             total_steps = max_epoch);
-    elif lr_schedule_cfg is None:
-        return None;
     else:
         glb_var.get_value('logger').error(f'Type of schedule [{lr_schedule_cfg["name"]} is not supported.]');
         raise callback.CustomException('LrScheduleError')

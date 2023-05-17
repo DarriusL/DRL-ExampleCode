@@ -4,7 +4,7 @@
 import os, logging, argparse
 from lib import glb_var
 from lib.callback import Logger
-from room import run_work
+from room.work import run_work
 
 if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):

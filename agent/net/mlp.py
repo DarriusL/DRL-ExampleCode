@@ -36,16 +36,8 @@ class MLPNet(Net):
                 torch.nn.Linear(self.hid_layers[0], out_dim)
             ]
         self.net = torch.nn.Sequential(*layers);
-        #init net
-        self.apply(self._init_para);
         #set training mode
         self.train();
-
-    def _init_para(self, module):
-        if isinstance(module, torch.nn.Linear):
-            module.weight.data.normal_();
-            if module.bias is not None:
-                module.bias.data.zero_();
 
     def forward(self, x):
         #x:[..., in_dim]

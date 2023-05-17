@@ -6,7 +6,7 @@ from room.system import System
 import torch, time
 
 def run_work(cfg_path, mode):
-    lab_cfg = json_util('./config/lab_cfg.json');
+    lab_cfg = json_util.jsonload('./config/lab_cfg.json');
     glb_var.set_values(lab_cfg['constant'])
     #set device
     if lab_cfg['general']:

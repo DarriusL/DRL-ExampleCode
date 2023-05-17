@@ -7,7 +7,7 @@
         },
         "net_cfg":{
             "name":"MLPNet",
-            "hid_layers":[16, 16, 16, 16],
+            "hid_layers":[32, 16],
             "hid_layers_activation":"Selu"
         },
         "optimizer_cfg":{
@@ -20,19 +20,19 @@
                 0.999
             ]
         },
-        "lr_schedule_cfg":{
-            "name":"OneCycleLR",
-            "lr_max":1e-2
-        },
+        "lr_schedule_cfg":null,
         "memory_cfg":{
             "name":"OnPolicy"
         },
         "train_exp_size":1,
         "max_epoch":300,
-        "T":200
+        "valid_step":1,
+        "valid_times":10
     },
     "env":{
         "name":"CartPole",
-        "solved_total_reward":195
-    }
+        "solved_total_reward":195,
+        "survival_T":200
+    },
+    "model_path":null
 }

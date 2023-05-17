@@ -2,23 +2,27 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.memory import *
-from agent.algorithm.alg_util import get_alg
+from agent.algorithm import *
+from agent.net import *
 from collections import namedtuple
-from lib import glb_var
+from lib import glb_var, util, json_util
+import matplotlib.pyplot as plt
 from env import *
+import numpy as np
+import torch, os
 
 class System():
     def __init__(self, cfg) -> None:
         self.cfg = cfg;
         self.loss = [];
         self.rets_mean = [];
+        self.rets_mean_valid = [];
         self.logger = glb_var.get_value('logger');
         memory = get_memory(cfg['agent_cfg']['memory_cfg']);
         algorithm = get_alg(cfg['agent_cfg']['algorithm_cfg'])
         self.agent = namedtuple('Agent', ['memory', 'algorithm'])(memory, algorithm);
-        self.env = make_env(cfg['env']);
-        in_dim = self.env.observation_space.shape[0];
-        out_dim = self.env.action_space.n;
+        self.env = get_env(cfg['env']);
+        in_dim, out_dim = self.env.get_state_and_action_dim();
         #Initialize the agent's network
         self.agent.algorithm.init_net(
             cfg['agent_cfg']['net_cfg'],
@@ -26,41 +30,88 @@ class System():
             cfg['agent_cfg']['lr_schedule_cfg'],
             in_dim,
             out_dim,
-            cfg['max_epoch']
+            cfg['agent_cfg']['max_epoch']
         );
+        self.save_path = glb_var.get_value('save_dir') + f'/{self.agent.algorithm.name}/{self.env.name}/{util.get_date("_")}';
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path);
+        self.cfg['model_path'] = self.save_path + '/alg.model';
+        json_util.jsonsave(self.cfg, self.save_path + '/config.json');
     
     def _check_train_point(self):
-        if len(self.agent.memory.states) == self.cfg['train_exp_size']:
-            self.logger.debug(f'The experience length [{len(self.agent.memory.states)}]reaches the training experience length, '
-                              'and the training will start');
+        if len(self.agent.memory.states) == self.cfg['agent_cfg']['train_exp_size']:
             return True;
         else:
             self.logger.debug(f'Current experience length [{len(self.agent.memory.states)}]' 
-                              f'does not meet the training requirements [{self.cfg["train_exp_size"]}].'
+                              f'does not meet the training requirements [{self.cfg["agent_cfg"]["train_exp_size"]}].'
                               'The agent will continue to gain experience');
             return False;
 
+    def _explore(self):
+        state, _ = self.env.reset();
+        for t in range(self.env.survival_T):
+            action = self.agent.algorithm.act(state);
+            next_state, reward, done, _, _ = self.env.step(action);
+            self.agent.memory.update(state, action, reward, next_state, done);
+            state = next_state;
+            if done:
+                break;
+
+    def _save(self):
+        torch.save(self.agent.algorithm, self.cfg['model_path']);
+
     def train(self):
+        max_total_rewards = -np.inf;
+        valid_not_imporve_cnt = 0;
         for epoch in range(self.cfg['agent_cfg']['max_epoch']):
-            state = self.env.reset();
-            for _ in range(self.cfg['agent_cfg']['T']):
-                action = self.agent.algorithm.act(state);
-                next_state, reward, done, _ = self.env.step(action);
-                self.agent.memory.update(state, action, reward, next_state, done);
-                if done:
-                    break;
-            
+            self._explore();
             if self._check_train_point():
                 #start to train
-                batch = self.agent.memory.sample();
+                batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
                 loss, rets_mean = self.agent.algorithm.train_epoch(batch);
                 self.loss.append(loss);
                 self.rets_mean.append(rets_mean);
-                total_rewards = sum(batch['rewards']);
-                solved = total_rewards > self.cfg['env']['solved_total_reward'];
-                self.logger(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]/n'
-                            f'Epoch: [{epoch}/{self.cfg["agent_cfg"]["max_epoch"]}] - train loss: {loss:.8f} - '
-                            f'lr: {self.agent.algorithm.optimizer.param_groups[0]["lr"]}\n'
-                            f'Mean Returns: [{rets_mean}] - Total Rewards: [{total_rewards}] - solved: {solved}');
+                total_rewards = self.agent.algorithm.get_total_rewards(batch);
+                solved = total_rewards > self.env.solved_total_reward;
+                self.logger.info(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
+                            f'Epoch: [{epoch + 1}/{self.cfg["agent_cfg"]["max_epoch"]}] - train loss: [{loss:.8f}] - '
+                            f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'
+                            f'Mean Returns: [{rets_mean:.3f}] - Total Rewards: [{total_rewards}] - solved: [{solved}]');
+            else:
+                raise callback.CustomException('DataError');
 
+            total_rewards = 0;
+            rets_mean = 0;
+            if (epoch + 1)%self.cfg['agent_cfg']['valid_step'] == 0:
+                for _ in range(self.cfg['agent_cfg']['valid_times']):
+                    self._explore();
+                    batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
+                    total_rewards += self.agent.algorithm.get_total_rewards(batch);
+                    _, rm = self.agent.algorithm.cal_rets(batch);
+                    rets_mean += rm;
+                total_rewards /= self.cfg['agent_cfg']['valid_times'];
+                rets_mean /= self.cfg['agent_cfg']['valid_times'];
+                self.rets_mean_valid.append(rets_mean);
+                if total_rewards > max_total_rewards:
+                    self._save()
+                    max_total_rewards = total_rewards;
+                    valid_not_imporve_cnt = 0;
+                else:
+                    valid_not_imporve_cnt += 1;
+                solved = total_rewards > self.env.solved_total_reward;
+                self.logger.info(f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
+                            f'Mean Returns: [{rets_mean:.3f}] - Total Rewards: [{total_rewards}] - solved: [{solved}] '
+                            f'not_imporve_cnt: [{valid_not_imporve_cnt}]');
+
+        plt.figure(figsize = (10, 6));
+        plt.plot(np.arange(0, len(self.rets_mean)) + 1, self.rets_mean, label = 'train');
+        plt.plot(
+            np.arange(self.cfg['agent_cfg']['valid_step'] - 1, len(self.rets_mean), self.cfg['agent_cfg']['valid_step']) + 1, 
+            self.rets_mean_valid, 
+            label = 'valid');
+        plt.xlabel('epoch');
+        plt.ylabel('mean_rets');
+        plt.yscale('log');
+        plt.legend(loc='upper right')
+        plt.savefig(self.save_path + '/loss.png', dpi = 400);
 

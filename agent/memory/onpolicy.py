@@ -50,9 +50,9 @@ class OnPolicyMemory(Memory):
         batch:dict
             e.g.
             batch = {
-                'states':  [[s0], [s1], [s2], ...],
-                'actions':[[a0], [a1], [a2], ...],
-                'rewards':[[r0], [r1], [r2], ...],
+                'states':  [[s_epoch0], [s_epoch1], [s_epoch2], ...],
+                'actions':[[a_epoch0], [a_epoch1], [a_epoch2], ...],
+                'rewards':[[r_epoch0], [r_epoch1], [r_epoch2], ...],
                 ...
             }
         '''
