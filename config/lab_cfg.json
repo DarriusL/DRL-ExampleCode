@@ -1,5 +1,8 @@
 {
     "constant":{
         "dropout_rate":0.3
+    },
+    "general":{
+        "is_gpu_available":true
     }
 }
