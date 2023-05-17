@@ -6,7 +6,10 @@ import gym
 
 def _make_env(env_cfg):
     if env_cfg['name'].lower() in 'cartpole':
-        return gym.make("CartPole-v1");
+        if glb_var.get_value('mode') == 'train':
+            return gym.make("CartPole-v1");
+        else:
+            return gym.make("CartPole-v1", render_mode="human");
     else:
         glb_var.get_value('logger').error(f'Type of env [{env_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');

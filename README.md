@@ -44,5 +44,6 @@ options:
 
 ```shell
 python executor.py -cfg='./config/reinforce/reinforce_cartpole.json' --mode='train'
+python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
