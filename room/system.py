@@ -105,15 +105,15 @@ class System():
             total_rewards = 0;
             rets_mean = 0;
             best_solved = False;
-            if (epoch + 1)%self.cfg['agent_cfg']['valid_step'] == 0:
-                for _ in range(self.cfg['agent_cfg']['valid_times']):
+            if (epoch + 1)%self.cfg['valid']['valid_step'] == 0:
+                for _ in range(self.cfg['valid']['valid_times']):
                     self._explore();
                     batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
                     total_rewards += self.agent.algorithm.get_total_rewards(batch);
                     _, rm = self.agent.algorithm.cal_rets(batch);
                     rets_mean += rm;
-                total_rewards /= self.cfg['agent_cfg']['valid_times'];
-                rets_mean /= self.cfg['agent_cfg']['valid_times'];
+                total_rewards /= self.cfg['valid']['valid_times'];
+                rets_mean /= self.cfg['valid']['valid_times'];
                 self.rets_mean_valid.append(rets_mean);
                 if total_rewards > max_total_rewards:
                     self._save()
@@ -130,13 +130,13 @@ class System():
                             f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{max_total_rewards}]'
                             f'- solved(now/best): [{solved}/{best_solved}] - not_imporve_cnt: [{valid_not_imporve_cnt}]');
         
-                if valid_not_imporve_cnt >= self.cfg['agent_cfg']['not_improve_finish_step'] and best_solved:
+                if valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and best_solved:
                     break
         self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]');
         plt.figure(figsize = (10, 6));
         plt.plot(np.arange(0, len(self.rets_mean)) + 1, self.rets_mean, label = 'train');
         plt.plot(
-            np.arange(self.cfg['agent_cfg']['valid_step'] - 1, len(self.rets_mean), self.cfg['agent_cfg']['valid_step']) + 1, 
+            np.arange(self.cfg['valid']['valid_step'] - 1, len(self.rets_mean), self.cfg['valid']['valid_step']) + 1, 
             self.rets_mean_valid, 
             label = 'valid');
         plt.xlabel('epoch');

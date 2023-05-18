@@ -25,15 +25,17 @@
             "name":"OnPolicy"
         },
         "train_exp_size":1,
-        "max_epoch":500,
-        "valid_step":1,
-        "valid_times":10,
-        "not_improve_finish_step":10
+        "max_epoch":1000
     },
     "env":{
         "name":"CartPole",
-        "solved_total_reward":495,
-        "survival_T":500
+        "solved_total_reward":9990,
+        "survival_T":10000
     },
-    "model_path":null
+    "model_path":null,
+    "valid":{
+        "valid_step":10,
+        "valid_times":5,
+        "not_improve_finish_step":5
+    }
 }
