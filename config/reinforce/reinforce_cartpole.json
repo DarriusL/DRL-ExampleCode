@@ -29,8 +29,9 @@
     },
     "env":{
         "name":"CartPole",
-        "solved_total_reward":9990,
-        "survival_T":10000
+        "solved_total_reward":99990,
+        "finish_total_reward":100000,
+        "survival_T":100000
     },
     "model_path":null,
     "valid":{

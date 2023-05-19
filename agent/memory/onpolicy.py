@@ -4,7 +4,7 @@
 from agent.memory.base import Memory
 
 class OnPolicyMemory(Memory):
-    '''Memory for on policy algorithm in episodic env
+    '''Memory for on policy algorithm in episodic env, experience is stored according to epoch
 
     Parameters:
     -----------
@@ -60,3 +60,37 @@ class OnPolicyMemory(Memory):
         #onpolicy
         self.reset();
         return batch;
+
+class OnPolicyBatchMemory(OnPolicyMemory):
+    '''Memory for on policy algorithm in episodic env, experience is stored according to batch
+
+    Parameters:
+    -----------
+    memory_cfg:dict
+    '''
+    def __init__(self, memory_cfg) -> None:
+        super().__init__(memory_cfg);
+        self.is_episodic_exp = False;
+
+    def update(self, state, action, reward, next_state, done):
+        '''add experience'''
+        self.exp_latest = (state, action, reward, next_state, done);
+        self.stock += 1;
+        for key in self.exp_keys:
+            getattr(self, key).append(self.cur_exp[key]);
+
+    def sample(self):
+        '''sample data
+
+        Returns:
+        --------
+        batch:dict
+            e.g.
+            batch = {
+                'states':  [s0, s1, s2, ...],
+                'actions':[a0, a1, a2, ...],
+                'rewards':[r0, r1, r2, ...],
+                ...
+            }
+        '''
+        return super().sample()

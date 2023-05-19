@@ -11,7 +11,7 @@ if __name__ == '__main__':
         os.makedirs("./cache/logger");
     glb_var.__init__();
     log = Logger(
-        level = logging.DEBUG,
+        level = logging.INFO,
         filename = './cache/logger/logger.log',
     ).get_log()
     glb_var.set_value('logger', log);

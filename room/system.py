@@ -20,7 +20,8 @@ class System():
         self.rets_mean_valid = [];
         self.logger = glb_var.get_value('logger');
         self.env = get_env(cfg['env']);
-        in_dim, out_dim = self.env.get_state_and_action_dim();
+        #action_dim : numbers of all actions
+        state_dim, action_dim = self.env.get_state_and_action_dim();
         if glb_var.get_value('mode') == 'test':
             self.save_path, _ = os.path.split(self.cfg['model_path']);
             algorithm = torch.load(self.cfg['model_path']);
@@ -31,8 +32,8 @@ class System():
                 cfg['agent_cfg']['net_cfg'],
                 cfg['agent_cfg']['optimizer_cfg'],
                 cfg['agent_cfg']['lr_schedule_cfg'],
-                in_dim,
-                out_dim,
+                state_dim,
+                action_dim,
                 cfg['agent_cfg']['max_epoch']
             ); 
             self.save_path = glb_var.get_value('save_dir') + f'/{algorithm.name.lower()}/{self.env.name.lower()}/{util.get_date("_")}';
@@ -43,17 +44,16 @@ class System():
 
         memory = get_memory(cfg['agent_cfg']['memory_cfg']);
         self.agent = namedtuple('Agent', ['memory', 'algorithm'])(memory, algorithm);
+        self.env.cur_state, _ = self.env.reset();
 
 
     def _check_train_point(self):
         '''Check if the conditions for a training session are met'''
-        if len(self.agent.memory.states) == self.cfg['agent_cfg']['train_exp_size']:
-            return True;
-        else:
-            self.logger.debug(f'Current experience length [{len(self.agent.memory.states)}]' 
-                              f'does not meet the training requirements [{self.cfg["agent_cfg"]["train_exp_size"]}].'
-                              'The agent will continue to gain experience');
-            return False;
+
+        self.logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
+                        f'Training requirements [{self.cfg["agent_cfg"]["train_exp_size"]}].');
+
+        return True if len(self.agent.memory.states) == self.cfg['agent_cfg']['train_exp_size'] else False;
 
     def _explore(self, train = True):
         '''Model Exploration Environment
@@ -63,15 +63,18 @@ class System():
         train:bool
             If it is model training, memory needs to collect data
         '''
-        state, _ = self.env.reset();
+        state = self.env.cur_state;
         for t in range(self.env.survival_T):
             action = self.agent.algorithm.act(state);
             next_state, reward, done, _, _ = self.env.step(action);
             if train:
                 self.agent.memory.update(state, action, reward, next_state, done);
+                if self._check_train_point():
+                    break;
 
             state = next_state;
             if done:
+                self.env.cur_state, _ = self.env.reset();
                 break;
 
     def _save(self):
@@ -130,7 +133,8 @@ class System():
                             f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{max_total_rewards}]'
                             f'- solved(now/best): [{solved}/{best_solved}] - not_imporve_cnt: [{valid_not_imporve_cnt}]');
         
-                if valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and best_solved:
+                if (valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and best_solved) or \
+                    (max_total_rewards >= self.env.finish_total_reward):
                     break
         self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]');
         plt.figure(figsize = (10, 6));
