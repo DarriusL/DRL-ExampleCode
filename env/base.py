@@ -18,15 +18,31 @@ class Env():
     '''Abstract Env class to define the API methods'''
     def __init__(self, env_cfg) -> None:
         util.set_attr(self, env_cfg);
+        self.is_training = True;
+    
+    def train(self):
+        '''train mode'''
+        self.is_training = True;
+    
+    def eval(self):
+        '''validation mode'''
+        self.is_training = False;
 
     def get_state_and_action_dim(self):
+        '''Get the choice space of environment state dimensions and actions'''
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
+    def get_state(self):
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def reset(self):
+        '''reset environment'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def step(self, action):
+        '''change the environment'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;

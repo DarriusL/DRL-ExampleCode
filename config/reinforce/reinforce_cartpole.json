@@ -2,7 +2,7 @@
     "agent_cfg":{
         "algorithm_cfg":{
             "name":"reinforce",
-            "gamma":0.99,
+            "gamma":0.999,
             "rets_mean_baseline":true
         },
         "net_cfg":{
@@ -29,7 +29,7 @@
     },
     "env":{
         "name":"CartPole",
-        "solved_total_reward":99990,
+        "solved_total_reward":99900,
         "finish_total_reward":100000,
         "survival_T":100000
     },

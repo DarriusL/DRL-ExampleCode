@@ -44,7 +44,7 @@ class System():
 
         memory = get_memory(cfg['agent_cfg']['memory_cfg']);
         self.agent = namedtuple('Agent', ['memory', 'algorithm'])(memory, algorithm);
-        self.env.cur_state, _ = self.env.reset();
+        self.env.reset();
 
 
     def _check_train_point(self):
@@ -52,30 +52,27 @@ class System():
 
         self.logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
                         f'Training requirements [{self.cfg["agent_cfg"]["train_exp_size"]}].');
+        if len(self.agent.memory.states) == self.cfg['agent_cfg']['train_exp_size']:
+            return True;
+        elif self.agent.memory.exp_latest[-1] and len(self.agent.memory.states) >= 0.5*self.cfg['agent_cfg']['train_exp_size']:
+            return True;
+        else:
+            return False
 
-        return True if len(self.agent.memory.states) == self.cfg['agent_cfg']['train_exp_size'] else False;
-
-    def _explore(self, train = True):
+    def _explore(self):
         '''Model Exploration Environment
-        
-        Parameters:
-        -----------
-        train:bool
-            If it is model training, memory needs to collect data
         '''
-        state = self.env.cur_state;
+        state = self.env.get_state();
         for t in range(self.env.survival_T):
             action = self.agent.algorithm.act(state);
             next_state, reward, done, _, _ = self.env.step(action);
-            if train:
-                self.agent.memory.update(state, action, reward, next_state, done);
-                if self._check_train_point():
-                    break;
-
-            state = next_state;
+            self.agent.memory.update(state, action, reward, next_state, done);
             if done:
-                self.env.cur_state, _ = self.env.reset();
+                self.env.reset();
                 break;
+            elif self.env.is_training and self._check_train_point():
+                break;
+            state = next_state;
 
     def _save(self):
         '''Save model
@@ -89,6 +86,7 @@ class System():
         valid_not_imporve_cnt = 0;
         for epoch in range(self.cfg['agent_cfg']['max_epoch']):
             #train
+            self.env.train();
             self._explore();
             if self._check_train_point():
                 #start to train
@@ -110,10 +108,12 @@ class System():
             best_solved = False;
             if (epoch + 1)%self.cfg['valid']['valid_step'] == 0:
                 for _ in range(self.cfg['valid']['valid_times']):
+                    self.env.eval();
                     self._explore();
                     batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
                     total_rewards += self.agent.algorithm.get_total_rewards(batch);
                     _, rm = self.agent.algorithm.cal_rets(batch);
+                    
                     rets_mean += rm;
                 total_rewards /= self.cfg['valid']['valid_times'];
                 rets_mean /= self.cfg['valid']['valid_times'];
