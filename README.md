@@ -7,7 +7,10 @@ Implementation code when learning deep reinforcement learning code(from SLM_Lab)
 ## Environment configuration
 
 ```shell
-
+git clone https://github.com/DarriusL/DRL-ExampleCode.git
+cd DRL-ExampleCode
+conda env create -f env.yml
+conda activate dev
 ```
 
 

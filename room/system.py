@@ -111,7 +111,7 @@ class System():
                     self.env.eval();
                     self._explore();
                     batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
-                    total_rewards += self.agent.algorithm.get_total_rewards(batch);
+                    total_rewards += self.env.get_total_reward();
                     _, rm = self.agent.algorithm.cal_rets(batch);
                     
                     rets_mean += rm;
