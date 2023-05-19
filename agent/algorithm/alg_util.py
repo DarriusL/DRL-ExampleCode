@@ -2,9 +2,24 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 import torch
-from agent import algorithm
-from agent.algorithm import *
-from lib import glb_var, callback
+import numpy as np
+from lib import util
+
+class VarScheduler():
+    def __init__(self, var_scheduler_cfg, max_epoch) -> None:
+        util.set_attr(self, var_scheduler_cfg);
+        self.epoch = 0
+        if self.name.lower() == 'linear':
+            self.steper = self._linear_scheduler;
+    
+    def step(self):
+        return self.steper();
+
+    def _linear_scheduler(self):
+        '''linear scheduler'''
+        self.epoch += 1;
+        var = (self.var_start - self.var_end)/self.max_epoch * self.epoch;
+        return max(var, self.var_end);
 
 def cal_returns(rewards, dones, gamma):
     '''Compute the returns in the trajectory produced by the Monte Carlo simulation
@@ -26,7 +41,48 @@ def cal_returns(rewards, dones, gamma):
         rets[t] = future_ret;
     return rets;
 
+def cal_nstep_returns(rewards, dones, next_v_pred, gamma, n):
+    '''
+
+    '''
+    rets = torch.zeros_like(rewards)
+    future_ret = next_v_pred
+    for t in reversed(range(n)):
+        rets[t] = future_ret = rewards[t] + gamma * future_ret * (~ dones[t])
+    return rets
+
 def rets_mean_baseline(rets):
     '''Add baselines to returns
     '''
     return rets - rets.mean();
+
+def action_default(action_logit):
+    '''default action strategy
+    
+    Parameters:
+    -----------
+    action_logit:torch.Tensor
+        [..., action_dim]
+    '''
+    #action probability distribution
+    action_pd = torch.distributions.Categorical(logits = action_logit);
+    return action_pd.sample();
+
+def action_random(action_logit):
+    '''default action strategy
+
+    Parameters:
+    -----------
+    action_logit:torch.Tensor
+        [..., action_dim]
+    '''
+    return torch.randint(0, action_logit.size()[-1], (1,));
+
+def action_epsilon_greedy(action_logit, epsilon):
+    '''epsilon greedy
+
+    '''
+    if np.random.random() > epsilon:
+        return action_default(action_logit);
+    else:
+        return action_random(action_logit);

@@ -1,4 +1,4 @@
-# @Time   : 2023.05.16
+# @Time   : 2023.05.19
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.net import *
@@ -8,22 +8,23 @@ from lib import glb_var
 import torch
 import numpy as np
 
-class Reinforce(Algorithm):
-    '''Implementation of REINFORCE
-    '''
+class Sarsa(Algorithm):
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #label for onpolicy algorithm
         self.is_onpolicy = True;
-        self.action_strategy = alg_util.action_default;
+        self.action_strategy = alg_util.action_epsilon_greedy;
+        
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, var_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
-        self.pi = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
+        self.q_net = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
         self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
+        self.var_schedule = alg_util.VarScheduler(var_schedule_cfg, max_epoch);
+        self.epsilon = self.var_schedule.var_start;
 
     def batch_to_tensor(self, batch):
         '''Convert a batch to a format for torch training
@@ -32,8 +33,10 @@ class Reinforce(Algorithm):
         batch['rewards']:[T]
         batch['next_states']:[T, in_dim]
         '''
+        batch['next_actions'] = np.zeros_like(batch['actions'])
+        batch['next_actions'][:-1] = batch['actions'][1:]
         for key in batch.keys():
-            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device')).squeeze();
+            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
         return batch;
 
     def cal_action_pd(self, state):
@@ -46,18 +49,7 @@ class Reinforce(Algorithm):
         '''
         #x:[..., in_dim]
         #return [..., out_dim]
-        return self.pi(state);
-
-    def cal_action_pd_batch(self, batch):
-        '''Calculate the logarithm value of the action probability of a batch
-
-        Parameters:
-        -----------
-        batch:dict
-            The value in it has been converted to tensor
-        '''
-        states_batch = batch['states'];
-        return self.cal_action_pd(states_batch);
+        return self.q_net(state);
 
     @torch.no_grad()
     def act(self, state, is_training):
@@ -82,22 +74,21 @@ class Reinforce(Algorithm):
         return action.cpu().item();
 
     def cal_rets(self, batch):
-        ''''''
-        rets = alg_util.cal_returns(batch['rewards'], batch['dones'], self.gamma);
-        rets_mean = rets.mean();
-        if self.rets_mean_baseline:
-            rets = alg_util.rets_mean_baseline(rets);
-        return rets, rets_mean.item();
+        pass;
 
-    def cal_loss(self, action_batch_logits, batch):
-        '''Calculate policy gradient loss for REINFORCE
-        '''
-        action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
+    def cal_loss(self, batch):
+        '''Calculate MSELoss for SARSA'''
+        #[T, out_dim]
+        q_preds_table = self.q_net(batch['states']);
+        #[T, out_dim]
+        with torch.no_grad():
+            next_q_preds_table = self.q_net(batch['next_states']);
         #[T]
-        log_probs = action_pd_batch.log_prob(batch['actions']);
-        rets, rets_mean = self.cal_rets(batch);
-        loss = - (rets * log_probs).mean();
-        return loss, rets_mean
+        q_pred = q_preds_table.gather(-1, batch['actions'].unsqueeze(-1)).squeeze(-1);
+        #[T]
+        next_q_preds = next_q_preds_table.gather(-1, batch['next_actions'].unsqueeze(-1)).squeeze(-1);
+        q_tar_preds = batch['rewards'] + self.gamma * next_q_preds * (~ batch['dones']);
+        return torch.nn.MSELoss()(q_pred, q_tar_preds);
 
     def train_epoch(self, batch):
         '''training network
@@ -109,7 +100,7 @@ class Reinforce(Algorithm):
         '''
         #[T, out_dim]
         action_batch_logits = self.cal_action_pd_batch(batch);
-        loss, rets_mean = self.cal_loss(action_batch_logits, batch);
+        loss = self.cal_loss(action_batch_logits, batch);
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         self.optimizer.zero_grad();

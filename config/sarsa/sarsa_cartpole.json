@@ -1,9 +1,13 @@
 {
     "agent_cfg":{
         "algorithm_cfg":{
-            "name":"reinforce",
-            "var_schedule_cfg":null,
-            "gamma":0.99,
+            "name":"sarsa",
+            "var_schedule_cfg":{
+                "name":"linear",
+                "var_start":1.0,
+                "var_end":0.05
+            },
+            "gamma": 0.99,
             "rets_mean_baseline":true
         },
         "net_cfg":{
@@ -25,7 +29,7 @@
         "memory_cfg":{
             "name":"OnPolicy"
         },
-        "train_exp_size":1,
+        "train_exp_size":32,
         "max_epoch":1000
     },
     "env":{

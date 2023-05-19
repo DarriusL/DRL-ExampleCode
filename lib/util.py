@@ -4,7 +4,7 @@
 import pydash as ps
 import datetime, time, torch
 
-def set_attr(obj, dict, keys = None):
+def set_attr(obj, dict_, keys = None, except_type = None):
     '''Quickly assign properties to objects
 
     Parameters:
@@ -12,7 +12,7 @@ def set_attr(obj, dict, keys = None):
     obj: object of a python class
         Assign values to the properties of the object
 
-    dict: dict
+    dict_: dict
         A dictionary for assigning values to object attributes, 
         whose key is the attribute, and the corresponding value is the value
     
@@ -22,8 +22,10 @@ def set_attr(obj, dict, keys = None):
 
     '''
     if keys is not None:
-        dict = ps.pick(dict, keys);
-    for key, value in dict.items():
+        dict_ = ps.pick(dict, keys);
+    for key, value in dict_.items():
+        if type(value) == except_type:
+            continue;
         setattr(obj, key, value);
 
 def get_attr(obj, keys):

@@ -7,7 +7,8 @@ import torch
 class Algorithm():
     '''Abstract Memory class to define the API methods'''
     def __init__(self, algorithm_cfg) -> None:
-        util.set_attr(self, algorithm_cfg);
+        util.set_attr(self, algorithm_cfg, except_type = dict);
+        self.action_strategy = None;
 
     def init_net(self):
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
@@ -25,7 +26,7 @@ class Algorithm():
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
-    def act(self, state):
+    def act(self, state, is_training):
         '''choose action'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;

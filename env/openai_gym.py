@@ -13,7 +13,22 @@ class Main_Body:
     t:None
 
 class OpenaiEnv(Env):
-    '''the openai environment'''
+    '''the openai environment
+    
+    Notes:
+    ------
+    Before using the environment each time, set the mode first.
+    e.g.
+    >>> env = OpenaiEnv(env_cfg);
+    >>> env.train();
+    >>> s = env.get_state();
+    ...
+    >>> s, r, d, _, _ = env.step(a);
+    ...
+    >>> env.eval();
+    ...
+    The trian mode will not automatically reset the environment, but the eval mode will
+    '''
     def __init__(self, env_cfg) -> None:
         super().__init__(env_cfg);
         env = _make_env(env_cfg);
@@ -35,6 +50,10 @@ class OpenaiEnv(Env):
     def get_total_reward(self):
         '''Get the total rewards of the current trajectory so far'''
         return self.main_body.total_reward;
+
+    def is_terminated(self):
+        '''Is the current environment terminated'''
+        return True if self.main_body.env.steps_beyond_terminated is not None else False;
 
     def _save_train_env(self):
         '''Save the training environment for recovery'''
@@ -58,7 +77,7 @@ class OpenaiEnv(Env):
         if self.is_training:
             self.is_training = False;
             self._save_train_env();
-            self.reset();     
+        self.reset();     
 
 
     def reset(self):

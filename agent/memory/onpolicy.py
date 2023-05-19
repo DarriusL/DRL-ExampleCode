@@ -33,7 +33,7 @@ class OnPolicyMemory(Memory):
         '''Add experience to experience memory
 
         '''
-        self.exp_latest = (state, action, reward, next_state, done);
+        self.exp_latest = [state, action, reward, next_state, done];
         for idx, key in enumerate(self.exp_keys):
             self.cur_exp[key].append(self.exp_latest[idx]);
         
