@@ -9,6 +9,8 @@ def get_memory(mmy_cfg):
     '''
     if mmy_cfg['name'].lower() in ['onpolicy', 'onpolicymemory']:
         return OnPolicyMemory(mmy_cfg);
+    elif mmy_cfg['name'].lower() in ['onpolicybatch', 'onpolicybatchmemory']:
+        return OnPolicyBatchMemory(mmy_cfg);
     else:
         glb_var.get_value('logger').error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');

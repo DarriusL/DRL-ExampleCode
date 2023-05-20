@@ -7,18 +7,17 @@
                 "var_start":1.0,
                 "var_end":0.05
             },
-            "gamma": 0.99,
-            "rets_mean_baseline":true
+            "gamma": 0.99
         },
         "net_cfg":{
             "name":"MLPNet",
-            "hid_layers":[32, 16],
+            "hid_layers":[64],
             "hid_layers_activation":"Selu"
         },
         "optimizer_cfg":{
-            "name":"Adam",
-            "lr":2e-3,
-            "learning_rate": 1e-06,
+            "name":"rmsprop",
+            "lr":1e-2,
+            "alpha":0.9,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
@@ -27,16 +26,16 @@
         },
         "lr_schedule_cfg":null,
         "memory_cfg":{
-            "name":"OnPolicy"
+            "name":"OnPolicyBatch"
         },
         "train_exp_size":32,
-        "max_epoch":1000
+        "max_epoch":10000
     },
     "env":{
         "name":"CartPole",
-        "solved_total_reward":99900,
-        "finish_total_reward":100000,
-        "survival_T":100000
+        "solved_total_reward":999,
+        "finish_total_reward":1000,
+        "survival_T":1000
     },
     "model_path":null,
     "valid":{

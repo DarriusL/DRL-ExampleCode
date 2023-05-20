@@ -14,6 +14,8 @@ def get_optimizer(optim_cfg, net):
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
     elif optim_cfg['name'].lower() == 'adamw':
         return torch.optim.AdamW(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
+    elif optim_cfg['name'].lower() == 'rmsprop':
+        return torch.optim.RMSprop(net.parameters(), lr = optim_cfg['lr'], alpha = optim_cfg['alpha'], weight_decay = optim_cfg['weight_decay']);
     else:
         glb_var.get_value('logger').warning(f"Unrecognized optimizer[{optim_cfg['name']}], set default Adam optimizer");
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr']);

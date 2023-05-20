@@ -9,6 +9,7 @@ class VarScheduler():
     def __init__(self, var_scheduler_cfg, max_epoch) -> None:
         util.set_attr(self, var_scheduler_cfg);
         self.epoch = 0
+        self.max_epoch = max_epoch;
         if self.name.lower() == 'linear':
             self.steper = self._linear_scheduler;
     
@@ -18,7 +19,7 @@ class VarScheduler():
     def _linear_scheduler(self):
         '''linear scheduler'''
         self.epoch += 1;
-        var = (self.var_start - self.var_end)/self.max_epoch * self.epoch;
+        var = self.var_start - (self.var_start - self.var_end)/self.max_epoch * self.epoch;
         return max(var, self.var_end);
 
 def cal_returns(rewards, dones, gamma):

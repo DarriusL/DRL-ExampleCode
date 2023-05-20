@@ -74,10 +74,10 @@ class OnPolicyBatchMemory(OnPolicyMemory):
 
     def update(self, state, action, reward, next_state, done):
         '''add experience'''
-        self.exp_latest = (state, action, reward, next_state, done);
+        self.exp_latest = [state, action, reward, next_state, done];
         self.stock += 1;
-        for key in self.exp_keys:
-            getattr(self, key).append(self.cur_exp[key]);
+        for idx, key in enumerate(self.exp_keys):
+            getattr(self, key).append(self.exp_latest[idx]);
 
     def sample(self):
         '''sample data

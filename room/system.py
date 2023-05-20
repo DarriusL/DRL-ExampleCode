@@ -21,7 +21,6 @@ class System():
     def __init__(self, cfg) -> None:
         self.cfg = cfg;
         self.loss = [];
-        self.rets_mean = [];
         self.rets_mean_valid = [];
         self.logger = glb_var.get_value('logger');
         self.env = get_env(cfg['env']);
@@ -59,7 +58,13 @@ class System():
 
         self.logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
                         f'Training requirements [{self.agent.train_exp_size}].');
-        return True if len(self.agent.memory.states) == self.agent.train_exp_size else False;
+        if len(self.agent.memory.states) == self.agent.train_exp_size:
+            return True;
+        elif self.env.is_terminated() and len(self.agent.memory.states) != 0:
+            #An epoch failed to meet the data length requirement after exploration, using the current data training
+            return True;
+        else:
+            return False;
 
     def _check_done(self):
         '''Check if the exploration of the current epoch is over'''
@@ -89,29 +94,28 @@ class System():
         valid_not_imporve_cnt = 0;
         for epoch in range(self.agent.max_epoch):
             loss_epoch = [];
-            rets_mean_epoch = [];
+            self.epoch_train_cnt = 0;
             while True:
                 #train
                 self.env.train();
                 self._explore();
                 if self._check_train_point():
+                    self.epoch_train_cnt += 1;
                     #start to train
                     batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
-                    loss, rets_mean = self.agent.algorithm.train_epoch(batch);
+                    loss = self.agent.algorithm.train_epoch(batch);
                     loss_epoch.append(loss);
-                    rets_mean_epoch.append(rets_mean);
-                if self._check_done():
+                if self._check_done() and self.epoch_train_cnt != 0:
                     self.loss.append(np.mean(loss_epoch));
-                    self.rets_mean.append(np.mean(rets_mean_epoch));
                     total_rewards = self.env.get_total_reward();
                     solved = total_rewards > self.env.solved_total_reward;
-                    self.logger.info(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
+                    self.logger.debug(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
                                 f'Epoch: [{epoch + 1}/{self.agent.max_epoch}] - train loss: [{self.loss[-1]:.8f}] - '
-                                f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'
-                                f'Mean Returns: [{self.rets_mean[-1]:.3f}] - Total Rewards: [{total_rewards}] - solved: [{solved}]');
+                                f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}] - Train times: [{self.epoch_train_cnt}]\n'
+                                f'Total Rewards: [{total_rewards}] - solved: [{solved}]');
                     self.env.reset();
                     break;
-
+            self.agent.algorithm.update();
             #valid
             total_rewards = 0;
             rets_mean = 0;
@@ -122,7 +126,7 @@ class System():
                     self._explore();
                     batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
                     total_rewards += self.env.get_total_reward();
-                    _, rm = self.agent.algorithm.cal_rets(batch);
+                    rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma).mean().item();
                     
                     rets_mean += rm;
                 total_rewards /= self.cfg['valid']['valid_times'];
@@ -142,15 +146,13 @@ class System():
                 self.logger.info(f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
                             f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{max_total_rewards}]'
                             f'- solved(now/best): [{solved}/{best_solved}] - not_imporve_cnt: [{valid_not_imporve_cnt}]');
-        
                 if (valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and best_solved) or \
                     (max_total_rewards >= self.env.finish_total_reward):
                     break
         self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]');
         plt.figure(figsize = (10, 6));
-        plt.plot(np.arange(0, len(self.rets_mean)) + 1, self.rets_mean, label = 'train');
         plt.plot(
-            np.arange(self.cfg['valid']['valid_step'] - 1, len(self.rets_mean), self.cfg['valid']['valid_step']) + 1, 
+            np.arange(self.cfg['valid']['valid_step'] - 1, self.agent.max_epoch, self.cfg['valid']['valid_step']) + 1, 
             self.rets_mean_valid, 
             label = 'valid');
         plt.xlabel('epoch');

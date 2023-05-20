@@ -36,6 +36,9 @@ class Reinforce(Algorithm):
             batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device')).squeeze();
         return batch;
 
+    def update(self):
+        pass
+
     def cal_action_pd(self, state):
         '''
         Action distribution probability in the input state

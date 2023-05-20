@@ -21,6 +21,10 @@ class Algorithm():
                               '(3)Not applicable for automatic mixed-precision acceleration.');
             raise callback.CustomException('ValueError');
 
+    def updata(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
     def cal_action_pd(self):
         '''Calculating Action Distribution Parameters'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');

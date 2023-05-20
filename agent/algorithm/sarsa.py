@@ -20,7 +20,7 @@ class Sarsa(Algorithm):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
         self.q_net = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
-        self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
+        self.optimizer = net_util.get_optimizer(optim_cfg, self.q_net);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
         self.var_schedule = alg_util.VarScheduler(var_schedule_cfg, max_epoch);
@@ -38,6 +38,11 @@ class Sarsa(Algorithm):
         for key in batch.keys():
             batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
         return batch;
+
+    def update(self):
+        '''Update epsilon for SARSA'''
+        self.epsilon = self.var_schedule.step();
+        glb_var.get_value('logger').debug(f'epsilon:[{self.epsilon}]');
 
     def cal_action_pd(self, state):
         '''
@@ -66,15 +71,12 @@ class Sarsa(Algorithm):
         action
         '''
         #the logarithm of the action probability distribution
-        action_logit = self.pi(torch.from_numpy(state).to(torch.float32).to(glb_var.get_value('device')));
+        action_logit = self.q_net(torch.from_numpy(state).to(torch.float32).to(glb_var.get_value('device')));
         if is_training:
-            action = self.action_strategy(action_logit);
+            action = self.action_strategy(action_logit, self.epsilon);
         else:
             action = alg_util.action_default(action_logit);
         return action.cpu().item();
-
-    def cal_rets(self, batch):
-        pass;
 
     def cal_loss(self, batch):
         '''Calculate MSELoss for SARSA'''
@@ -87,8 +89,8 @@ class Sarsa(Algorithm):
         q_pred = q_preds_table.gather(-1, batch['actions'].unsqueeze(-1)).squeeze(-1);
         #[T]
         next_q_preds = next_q_preds_table.gather(-1, batch['next_actions'].unsqueeze(-1)).squeeze(-1);
-        q_tar_preds = batch['rewards'] + self.gamma * next_q_preds * (~ batch['dones']);
-        return torch.nn.MSELoss()(q_pred, q_tar_preds);
+        q_tar_preds = batch['rewards'] + self.gamma * next_q_preds * (~ batch['dones']).to(torch.float32);
+        return torch.nn.MSELoss()(q_pred.float(), q_tar_preds.float());
 
     def train_epoch(self, batch):
         '''training network
@@ -98,9 +100,7 @@ class Sarsa(Algorithm):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
-        #[T, out_dim]
-        action_batch_logits = self.cal_action_pd_batch(batch);
-        loss = self.cal_loss(action_batch_logits, batch);
+        loss = self.cal_loss(batch);
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         self.optimizer.zero_grad();
@@ -111,4 +111,4 @@ class Sarsa(Algorithm):
             self.lr_schedule.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
-        return loss.item(), rets_mean;
+        return loss.item();
