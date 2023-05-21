@@ -1,8 +1,8 @@
-# DRL-ExampleCode(Not finished, coding in progress)
+# DRL-ExampleCode
 
 code reference: [SLM_Lab](https://github.com/kengz/SLM-Lab)
 
-Implementation code when learning deep reinforcement learning code(from SLM_Lab), only supported environments: CartPole.
+Implementation code when learning deep reinforcement learning code(from SLM_Lab mainly).
 
 ## Environment configuration
 
@@ -20,6 +20,46 @@ conda activate dev
 ## Framework file structure
 
 ```
+├── .gitignore
+├── agent
+│	├── algorithm
+│	│	├── alg_util.py
+│	│	├── base.py
+│	│	├── reinforce.py
+│	│	├── sarsa.py
+│	│	└──__init__.py
+│	├── memory
+│	│	├── base.py
+│	│	├── onpolicy.py
+│	│	└── __init__.py
+│	└── net
+│		├── base.py
+│		├── mlp.py
+│		├── net_util.py
+│		└──__init__.py
+├── cache/。
+├── config
+│	├── lab_cfg.json
+│	├── reinforce
+│	│	└── reinforce_cartpole.json
+│	└── sarsa
+│		└── sarsa_cartpole.json
+├── env
+│	├── base.py
+│	├── openai_gym.py
+│	└── __init__.py
+├── env.yml
+├── executor.py
+├── lib
+│	├── callback.py
+│	├── glb_var.py
+│	├── json_util.py
+│	└── util.py
+├── LICENSE
+├── README.md
+└── room
+	├── system.py
+	└── work.py
 
 ```
 
