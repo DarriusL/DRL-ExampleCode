@@ -3,6 +3,7 @@
 # @Email  : darrius.lei@outlook.com
 import pydash as ps
 import datetime, time, torch
+from matplotlib import pyplot as plt
 
 def set_attr(obj, dict_, keys = None, except_type = None):
     '''Quickly assign properties to objects
@@ -63,3 +64,10 @@ def s2hms(s):
     '''Convert s to hms
     '''
     return time.strftime("%H hour - %M min - %S s", time.gmtime(s));
+
+def single_plot(x_data, y_data, x_label, y_label, path):
+    plt.figure(figsize = (10, 6));
+    plt.plot(x_data, y_data);
+    plt.xlabel(x_label);
+    plt.ylabel(y_label);
+    plt.savefig(path, dpi = 400);

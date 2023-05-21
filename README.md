@@ -32,21 +32,31 @@ conda activate dev
 ### usage
 
 ```shell
-usage: executor.py [-h] [--config CONFIG] [--mode MODE]
+usage: executor.py [-h] [--config CONFIG] [--mode MODE] [--dev DEV]
 
 options:
   -h, --help            show this help message and exit
   --config CONFIG, -cfg CONFIG
                         Path of configration.
-  --mode MODE           Mode of operation.
+  --mode MODE           Mode of operation.(train/test)
+  --dev DEV             Enable code debugging
 ```
 
 
 
 ### qiuck start
 
+reinforce
+
 ```shell
 python executor.py -cfg='./config/reinforce/reinforce_cartpole.json' --mode='train'
 python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
+```
+
+sarsa
+
+```shell
+python executor.py -cfg='./config/sarsa/sarsa_cartpole.json' --mode='train'
+python executor.py -cfg='./cache/data/sarsa/cartpole/[-opt-]/config.json' --mode='test'
 ```
 

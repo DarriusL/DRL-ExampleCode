@@ -10,17 +10,21 @@ if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):
         os.makedirs("./cache/logger");
     glb_var.__init__();
-    log = Logger(
-        level = logging.INFO,
-        filename = './cache/logger/logger.log',
-    ).get_log()
-    glb_var.set_value('logger', log);
+
     #set arg
     parse = argparse.ArgumentParser();
     parse.add_argument('--config', '-cfg', type = str, default = None, help = 'Path of configration.');
-    parse.add_argument('--mode', type = str, default = 'train', help = 'Mode of operation.');
+    parse.add_argument('--mode', type = str, default = 'train', help = 'Mode of operation.(train/test)');
+    parse.add_argument('--dev', type = bool, default = False, help = 'Enable code debugging');
 
     args = parse.parse_args();
 
-    if args.config is not None:
+    log_level = logging.DEBUG if args.dev else logging.INFO;
+    log = Logger(
+        level = log_level,
+        filename = './cache/logger/logger.log',
+    ).get_log()
+    glb_var.set_value('logger', log);
+    glb_var.set_value('dev', args.dev);
+    if args.config is not None and args.mode in ['train', 'test']:
         run_work(args.config, args.mode);

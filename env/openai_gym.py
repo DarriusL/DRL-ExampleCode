@@ -5,6 +5,7 @@ from env.base import Env, _make_env
 import numpy as np
 import copy
 from dataclasses import dataclass
+from lib import glb_var
 
 @dataclass
 class Main_Body:
@@ -67,16 +68,18 @@ class OpenaiEnv(Env):
     def train(self):
         '''set train mode
         '''
-        if not self.is_training:
+        if (not self.is_training):
             self.is_training = True;
-            self._resume_train_env();
+            if glb_var.get_value('mode') == 'train':
+                self._resume_train_env();
     
     def eval(self):
         '''set eval mode
         '''
-        if self.is_training:
+        if self.is_training :
             self.is_training = False;
-            self._save_train_env();
+            if glb_var.get_value('mode') == 'train':
+                self._save_train_env();
         self.reset();     
 
 

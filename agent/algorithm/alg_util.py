@@ -6,10 +6,9 @@ import numpy as np
 from lib import util
 
 class VarScheduler():
-    def __init__(self, var_scheduler_cfg, max_epoch) -> None:
+    def __init__(self, var_scheduler_cfg) -> None:
         util.set_attr(self, var_scheduler_cfg);
         self.epoch = 0
-        self.max_epoch = max_epoch;
         if self.name.lower() == 'linear':
             self.steper = self._linear_scheduler;
     
@@ -19,7 +18,9 @@ class VarScheduler():
     def _linear_scheduler(self):
         '''linear scheduler'''
         self.epoch += 1;
-        var = self.var_start - (self.var_start - self.var_end)/self.max_epoch * self.epoch;
+        if self.epoch < self.star_epoch:
+            return self.var_start
+        var = self.var_start - (self.var_start - self.var_end)/(self.end_epoch - self.star_epoch) * (self.epoch - self.star_epoch);
         return max(var, self.var_end);
 
 def cal_returns(rewards, dones, gamma):

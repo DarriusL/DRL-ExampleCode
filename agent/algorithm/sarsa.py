@@ -23,7 +23,7 @@ class Sarsa(Algorithm):
         self.optimizer = net_util.get_optimizer(optim_cfg, self.q_net);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
-        self.var_schedule = alg_util.VarScheduler(var_schedule_cfg, max_epoch);
+        self.var_schedule = alg_util.VarScheduler(var_schedule_cfg);
         self.epsilon = self.var_schedule.var_start;
 
     def batch_to_tensor(self, batch):
@@ -106,6 +106,7 @@ class Sarsa(Algorithm):
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();
+        torch.nn.utils.clip_grad_norm_(self.q_net.parameters(), max_norm = 0.5);
         self.optimizer.step();
         if self.lr_schedule is not None:
             self.lr_schedule.step();

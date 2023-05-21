@@ -35,7 +35,7 @@
     },
     "model_path":null,
     "valid":{
-        "valid_step":10,
+        "valid_step":100,
         "valid_times":5,
         "not_improve_finish_step":5
     }
