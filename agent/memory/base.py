@@ -11,6 +11,11 @@ class Memory():
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
 
+    def _batch_to_tensor(self):
+        '''Convert a batch to a format for torch training'''
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
     def reset(self):
         '''Reset experience memory memory'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');

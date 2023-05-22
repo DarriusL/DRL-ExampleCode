@@ -6,6 +6,15 @@ from room.system import *
 import torch, time, os
 
 def run_work(cfg_path, mode):
+    '''Run the corresponding mode according to the configuration file
+
+    Parameters:
+    -----------
+    cfg_path:str
+        The path of the configuration file
+    
+    mode:str
+    '''
     lab_cfg = json_util.jsonload('./config/lab_cfg.json');
     glb_var.set_values(lab_cfg['constant'])
     glb_var.set_value('mode', mode)

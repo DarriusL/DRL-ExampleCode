@@ -6,6 +6,7 @@ from lib import callback, glb_var
 __all__ = ['get_alg', 'alg_util'];
 
 def get_alg(alg_cfg):
+    '''Obtain the corresponding algorithm object according to the configuration'''
     try:
         AlgClass = getattr(algorithm, alg_cfg['name']);
         return AlgClass(alg_cfg);

@@ -16,7 +16,6 @@ class OnPolicySystem(System):
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
 
-
     def _check_train_point(self):
         '''Check if the conditions for a training session are met'''
         if len(self.agent.memory.states) == self.agent.train_exp_size:
@@ -32,12 +31,19 @@ class OnPolicySystem(System):
 
     def _explore(self):
         '''Model Exploration Environment
+
+        Notes:
+        ------
+        Exit differently for training, validation(test falls into verification mode):
+        1.training: the data length requirement must be met to force exit.
+        2.validation: from the reset environment to the end of the environment.
         '''
         state = self.env.get_state();
         while True:
             action = self.agent.algorithm.act(state, self.env.is_training);
             next_state, reward, done, _, _ = self.env.step(action);
             self.agent.memory.update(state, action, reward, next_state, done);
+            #Check the conditions for exiting the environment
             if self.env.is_training:
                 if self._check_train_point():
                     break;
@@ -46,7 +52,7 @@ class OnPolicySystem(System):
                     self.env.reset();
                     next_state = self.env.get_state();
             elif done:
-                #is test mode
+                #it's test mode
                 break;
             state = next_state;
 
@@ -113,14 +119,20 @@ class OnPolicySystem(System):
             self._check_mode();
         self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]'
                          f'\nSaved path:{self.save_path}');
+        #plot rets
         util.single_plot(
             np.arange(self.cfg['valid']['valid_step'] - 1, epoch + 1, self.cfg['valid']['valid_step']) + 1,
             self.rets_mean_valid,
-            'epoch', 'mean_rets', self.save_path + '/mean_rets');
+            'epoch', 'mean_rets', self.save_path + '/mean_rets.png');
+        #plot total rewards
         util.single_plot(
             np.arange(self.cfg['valid']['valid_step'] - 1, epoch + 1, self.cfg['valid']['valid_step']) + 1,
             self.total_rewards_valid,
-            'epoch', 'mean_rets', self.save_path + '/rewards');
+            'epoch', 'mean_rets', self.save_path + '/rewards.png');
+        #plot loss
+        util.single_plot(
+            np.arange(len(self.loss)), self.loss, 'epoch', 'loss', self.save_path + '/loss.png'
+        )
 
     def test(self):
         self.env.eval()

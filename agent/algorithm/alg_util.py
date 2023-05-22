@@ -6,6 +6,7 @@ import numpy as np
 from lib import util
 
 class VarScheduler():
+    '''variable scheduler'''
     def __init__(self, var_scheduler_cfg) -> None:
         util.set_attr(self, var_scheduler_cfg);
         self.epoch = 0

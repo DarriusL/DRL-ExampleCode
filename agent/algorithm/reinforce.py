@@ -6,7 +6,6 @@ from agent.algorithm.base import Algorithm
 from agent.algorithm import alg_util
 from lib import glb_var
 import torch
-import numpy as np
 
 class Reinforce(Algorithm):
     '''Implementation of REINFORCE
@@ -24,17 +23,6 @@ class Reinforce(Algorithm):
         self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
-
-    def batch_to_tensor(self, batch):
-        '''Convert a batch to a format for torch training
-        batch['states]:[T, in_dim]
-        batch['actions']:[T]
-        batch['rewards']:[T]
-        batch['next_states']:[T, in_dim]
-        '''
-        for key in batch.keys():
-            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device')).squeeze();
-        return batch;
 
     def update(self):
         pass
@@ -85,7 +73,7 @@ class Reinforce(Algorithm):
         return action.cpu().item();
 
     def cal_rets(self, batch):
-        ''''''
+        '''Calculate returns'''
         rets = alg_util.cal_returns(batch['rewards'], batch['dones'], self.gamma);
         rets_mean = rets.mean();
         if self.rets_mean_baseline:
@@ -98,9 +86,9 @@ class Reinforce(Algorithm):
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[T]
         log_probs = action_pd_batch.log_prob(batch['actions']);
-        rets, rets_mean = self.cal_rets(batch);
+        rets, _ = self.cal_rets(batch);
         loss = - (rets * log_probs).mean();
-        return loss, rets_mean
+        return loss;
 
     def train_epoch(self, batch):
         '''training network
@@ -112,15 +100,16 @@ class Reinforce(Algorithm):
         '''
         #[T, out_dim]
         action_batch_logits = self.cal_action_pd_batch(batch);
-        loss, rets_mean = self.cal_loss(action_batch_logits, batch);
+        loss = self.cal_loss(action_batch_logits, batch);
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();
+        torch.nn.utils.clip_grad_norm_(self.pi.parameters(), max_norm = 0.5);
         self.optimizer.step();
         if self.lr_schedule is not None:
             self.lr_schedule.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
-        return loss.item(), rets_mean;
+        return loss.item();

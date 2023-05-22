@@ -2,6 +2,9 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.memory.base import Memory
+from lib import glb_var
+import numpy as np
+import torch
 
 class OnPolicyMemory(Memory):
     '''Memory for on policy algorithm in episodic env, experience is stored according to epoch
@@ -41,12 +44,22 @@ class OnPolicyMemory(Memory):
         if done:
             for key in self.exp_keys:
                 getattr(self, key).append(self.cur_exp[key]);
+    
+    def _batch_to_tensor(self, batch):
+        '''Convert a batch to a format for torch training
+        batch['states]:[T, in_dim]
+        batch['actions']:[T]
+        batch['rewards']:[T]
+        batch['next_states']:[T, in_dim]
+        '''
+        for key in batch.keys():
+            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device')).squeeze();
+        return batch;
 
     def sample(self):
         '''sample data
 
-        Returns:
-        --------
+        batch_origin
         batch:dict
             e.g.
             batch = {
@@ -55,14 +68,20 @@ class OnPolicyMemory(Memory):
                 'rewards':[[r_epoch0], [r_epoch1], [r_epoch2], ...],
                 ...
             }
+
+        batch_convert
+        batch['states]:[T, in_dim]
+        batch['actions']:[T]
+        batch['rewards']:[T]
+        batch['next_states']:[T, in_dim]
         '''
         batch = {key: getattr(self, key) for key in self.exp_keys};
         #onpolicy
         self.reset();
-        return batch;
+        return self._batch_to_tensor(batch);
 
 class OnPolicyBatchMemory(OnPolicyMemory):
-    '''Memory for on policy algorithm in episodic env, experience is stored according to batch
+    '''Memory for on policy algorithm, experience is stored according to batch
 
     Parameters:
     -----------
@@ -78,6 +97,19 @@ class OnPolicyBatchMemory(OnPolicyMemory):
         self.stock += 1;
         for idx, key in enumerate(self.exp_keys):
             getattr(self, key).append(self.exp_latest[idx]);
+    
+    def _batch_to_tensor(self, batch):
+        '''Convert a batch to a format for torch training
+        batch['states]:[T, in_dim]
+        batch['actions']:[T]
+        batch['rewards']:[T]
+        batch['next_states']:[T, in_dim]
+        '''
+        batch['next_actions'] = np.zeros_like(batch['actions'])
+        batch['next_actions'][:-1] = batch['actions'][1:]
+        for key in batch.keys():
+            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
+        return batch;
 
     def sample(self):
         '''sample data

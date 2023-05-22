@@ -14,7 +14,6 @@ class Sarsa(Algorithm):
         #label for onpolicy algorithm
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_epsilon_greedy;
-        
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, var_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
@@ -25,19 +24,6 @@ class Sarsa(Algorithm):
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
         self.var_schedule = alg_util.VarScheduler(var_schedule_cfg);
         self.epsilon = self.var_schedule.var_start;
-
-    def batch_to_tensor(self, batch):
-        '''Convert a batch to a format for torch training
-        batch['states]:[T, in_dim]
-        batch['actions']:[T]
-        batch['rewards']:[T]
-        batch['next_states']:[T, in_dim]
-        '''
-        batch['next_actions'] = np.zeros_like(batch['actions'])
-        batch['next_actions'][:-1] = batch['actions'][1:]
-        for key in batch.keys():
-            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
-        return batch;
 
     def update(self):
         '''Update epsilon for SARSA'''
