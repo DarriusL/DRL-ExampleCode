@@ -1,61 +1,21 @@
 # @Time   : 2023.05.16
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
-from agent.memory import *
 from agent.algorithm import *
-from agent.net import *
-from dataclasses import dataclass
-from lib import glb_var, util, json_util
-import matplotlib.pyplot as plt
-from env import *
+from lib import util
+from room.system.base import System
 import numpy as np
-import torch, os
+import torch
 
-@dataclass
-class Agent:
-    memory:None
-    algorithm:None
 
-class System():
-    ''''''
-    def __init__(self, cfg) -> None:
-        self.cfg = cfg;
+class OnPolicySystem(System):
+    '''System for onpolicy agent'''
+    def __init__(self, cfg, algorithm, env) -> None:
+        super().__init__(cfg, algorithm, env);
         self.loss = [];
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
-        self.logger = glb_var.get_value('logger');
-        self.env = get_env(cfg['env']);
-        #action_dim : numbers of all actions
-        state_dim, action_dim = self.env.get_state_and_action_dim();
-        if glb_var.get_value('mode') == 'test':
-            self.save_path, _ = os.path.split(self.cfg['model_path']);
-            algorithm = torch.load(self.cfg['model_path']);
-        elif glb_var.get_value('mode') == 'train':
-            algorithm = get_alg(cfg['agent_cfg']['algorithm_cfg']);
-            #Initialize the agent's network
-            algorithm.init_net(
-                cfg['agent_cfg']['net_cfg'],
-                cfg['agent_cfg']['optimizer_cfg'],
-                cfg['agent_cfg']['lr_schedule_cfg'],
-                cfg['agent_cfg']['algorithm_cfg']['var_schedule_cfg'],
-                state_dim,
-                action_dim,
-                cfg['agent_cfg']['max_epoch']
-            ); 
-            self.save_path = glb_var.get_value('save_dir') + f'/{algorithm.name.lower()}/{self.env.name.lower()}/{util.get_date("_")}';
-            if not os.path.exists(self.save_path):
-                os.makedirs(self.save_path);
-            self.cfg['model_path'] = self.save_path + '/alg.model';
-            json_util.jsonsave(self.cfg, self.save_path + '/config.json'); 
 
-        memory = get_memory(cfg['agent_cfg']['memory_cfg']);
-        self.agent = Agent(memory, algorithm);
-        util.set_attr(self.agent, cfg['agent_cfg'], except_type = dict)
-        self.env.reset();
-
-    def _check_mode(self):
-        if glb_var.get_value('dev'):
-            input("\n>>>press any key to continue<<<");
 
     def _check_train_point(self):
         '''Check if the conditions for a training session are met'''
@@ -151,7 +111,8 @@ class System():
                     (max_total_rewards >= self.env.finish_total_reward):
                     break
             self._check_mode();
-        self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]');
+        self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]'
+                         f'\nSaved path:{self.save_path}');
         util.single_plot(
             np.arange(self.cfg['valid']['valid_step'] - 1, epoch + 1, self.cfg['valid']['valid_step']) + 1,
             self.rets_mean_valid,

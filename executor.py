@@ -2,7 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 import os, logging, argparse
-from lib import glb_var
+from lib import glb_var, callback
 from lib.callback import Logger
 from room.work import run_work
 
@@ -28,3 +28,6 @@ if __name__ == '__main__':
     glb_var.set_value('dev', args.dev);
     if args.config is not None and args.mode in ['train', 'test']:
         run_work(args.config, args.mode);
+    else:
+        glb_var.get_value('logger').error(f'Mode [{args.mode}] is not supported.')
+        raise callback.CustomException('ModeError');

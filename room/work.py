@@ -2,7 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from lib import json_util, util, glb_var
-from room.system import System
+from room.system import *
 import torch, time, os
 
 def run_work(cfg_path, mode):
@@ -21,7 +21,7 @@ def run_work(cfg_path, mode):
         cfg['model_path'], _ = os.path.split(cfg_path);
         cfg['model_path'] += '/alg.model';
     #generate system
-    system = System(cfg);
+    system = get_system(cfg);
 
     if mode == 'train':
         run_train(system);
