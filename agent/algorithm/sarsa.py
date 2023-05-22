@@ -86,6 +86,8 @@ class Sarsa(Algorithm):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
+        batch['next_actions'] = torch.zeros_like(batch['actions'])
+        batch['next_actions'][:-1] = batch['actions'][1:]
         loss = self.cal_loss(batch);
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();

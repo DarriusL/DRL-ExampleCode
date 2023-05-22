@@ -72,7 +72,7 @@ class OnPolicySystem(System):
             self.env.train();
             self._explore();
             #start to train
-            batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
+            batch = self.agent.memory.sample();
             self.logger.debug(f'batch data:\n{batch}');
             loss = self.agent.algorithm.train_epoch(batch);
             loss_epoch.append(loss);
@@ -91,7 +91,7 @@ class OnPolicySystem(System):
                 for _ in range(self.cfg['valid']['valid_times']):
                     self.env.eval();
                     self._explore();
-                    batch = self.agent.algorithm.batch_to_tensor(self.agent.memory.sample());
+                    batch = self.agent.memory.sample();
                     total_rewards += self.env.get_total_reward();
                     rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma).mean().item();
                     rets_mean += rm;

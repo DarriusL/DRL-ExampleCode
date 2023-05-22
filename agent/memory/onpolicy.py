@@ -105,8 +105,6 @@ class OnPolicyBatchMemory(OnPolicyMemory):
         batch['rewards']:[T]
         batch['next_states']:[T, in_dim]
         '''
-        batch['next_actions'] = np.zeros_like(batch['actions'])
-        batch['next_actions'][:-1] = batch['actions'][1:]
         for key in batch.keys():
             batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
         return batch;
