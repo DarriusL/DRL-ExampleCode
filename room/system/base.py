@@ -17,6 +17,7 @@ class System():
         self.logger = glb_var.get_value('logger');
         self.cfg = cfg;
         self.env = env;
+        self.is_training = True;
         if glb_var.get_value('mode') == 'test':
             self.save_path, _ = os.path.split(self.cfg['model_path']);
         elif glb_var.get_value('mode') == 'train':
@@ -31,15 +32,43 @@ class System():
         util.set_attr(self.agent, cfg['agent_cfg'], except_type = dict)
         self.env.reset();
 
+    def _check_done(self):
+        '''Check if the exploration of the current epoch is over'''
+        return True if self.env.is_terminated() else False;
+
     def _check_mode(self):
         '''Check whether it is dev mode'''
         if glb_var.get_value('dev'):
             input("\n>>>press any key to continue<<<");
 
+    def _check_train_point(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
+    def _check_valid_point(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
     def _explore(self):
         '''The agent explores the environment to gain experience'''
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
+
+    def _train_epoch(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
+    def train_mode(self):
+        '''switch to train mode'''
+        self.is_training = True;
+        self.agent.memory.train();
+        self.env.train();
+
+    def valid_mode(self):
+        '''switch to valid mdoe'''
+        self.is_training = False;
+        self.agent.memory.valid();
+        self.env.valid();
 
     def train(self):
         '''train agent'''

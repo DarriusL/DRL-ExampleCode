@@ -107,5 +107,5 @@ def action_boltzmann(action_logit, tau):
         [..., action_dim]
     '''
     action_logit = action_logit / tau;
-    action_logit = torch.nn.Softmax(action_logit);
+    action_logit = torch.nn.Softmax(dim = -1)(action_logit);
     return action_default(action_logit);

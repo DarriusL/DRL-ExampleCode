@@ -21,8 +21,9 @@ class Algorithm():
                               '(3)Not applicable for automatic mixed-precision acceleration.');
             raise callback.CustomException('ValueError');
 
-    def updata(self):
-        pass;
+    def update(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
 
     def cal_action_pd(self):
         '''Calculating Action Distribution Parameters'''
@@ -34,7 +35,7 @@ class Algorithm():
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
-    def train(self, batch):
+    def train_step(self, batch):
         '''Train
         batch is the original data sampled in memory
         '''

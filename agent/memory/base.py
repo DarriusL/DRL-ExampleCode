@@ -2,10 +2,17 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from lib import util, glb_var
-
 class Memory():
-    '''Abstract Memory class to define the API methods'''
-
+    '''Abstract Memory class to define the API methods
+    
+    Notes:
+    ------
+    1. train(), valid() are used to switch modes, 
+       train mode is used to store data during training, 
+       and valid mode is used to store data during verification.
+    2. valid mode uses on-policy memory.
+    3. Due to its particularity (it will be cleared after each sampling), the on-policy memory can be used directly
+    '''
     def __init__(self, memory_cfg) -> None:
         util.set_attr(self, memory_cfg);
         #Experience data that needs to be stored
@@ -14,6 +21,14 @@ class Memory():
 
     def _batch_to_tensor(self):
         '''Convert a batch to a format for torch training'''
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
+    def train(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
+    def valid(self):
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 

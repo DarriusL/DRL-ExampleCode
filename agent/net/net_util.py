@@ -29,6 +29,12 @@ def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
             optimizer = optimizer, 
             max_lr = lr_schedule_cfg['lr_max'],
             total_steps = max_epoch);
+    elif lr_schedule_cfg['name'].lower() == 'steplr':
+        return torch.optim.lr_scheduler.StepLR(
+            optimizer = optimizer,
+            step_size = lr_schedule_cfg['step_size'],
+            gamma = lr_schedule_cfg['gamma']
+        )
     else:
         glb_var.get_value('logger').error(f'Type of schedule [{lr_schedule_cfg["name"]} is not supported.]');
         raise callback.CustomException('LrScheduleError')

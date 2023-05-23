@@ -37,7 +37,7 @@ conda activate dev
 │		├── mlp.py
 │		├── net_util.py
 │		└──__init__.py
-├── cache/。
+├── cache/.
 ├── config
 │	├── lab_cfg.json
 │	├── reinforce

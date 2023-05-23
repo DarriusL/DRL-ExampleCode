@@ -18,11 +18,17 @@ class ClassicDQN(Sarsa):
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         self.is_onpolicy = False;
+        #Mark: Used to update the learning rate after training, 
+        #because it needs to be collected in a certain period of epoch and cannot be trained
+        self.is_train_point = False;
         self.action_strategy = alg_util.action_boltzmann;
 
     def update(self):
-        '''Update tau for DQN'''
+        '''Update tau and lr for DQN'''
         self.var = self.var_schedule.step();
+        if (self.lr_schedule is not None) and self.is_train_point:
+            self.lr_schedule.step();
+            self.is_train_point = True;
         glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
 
     def cal_loss(self, batch):
@@ -39,7 +45,7 @@ class ClassicDQN(Sarsa):
         q_tar_preds = batch['rewards'] + self.gamma * max_next_q_pred * (~ batch['dones']).to(torch.float32);
         return torch.nn.MSELoss()(q_preds.float(), q_tar_preds.float());
 
-    def train_epoch(self, batch):
+    def train_step(self, batch):
         '''training network
 
         Parameters:
@@ -47,6 +53,7 @@ class ClassicDQN(Sarsa):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
+        self.is_train_point = True;
         loss = self.cal_loss(batch);
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();

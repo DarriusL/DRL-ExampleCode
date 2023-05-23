@@ -26,9 +26,9 @@ class OpenaiEnv(Env):
     ...
     >>> s, r, d, _, _ = env.step(a);
     ...
-    >>> env.eval();
+    >>> env.valid();
     ...
-    The trian mode will not automatically reset the environment, but the eval mode will
+    The trian mode will not automatically reset the environment, but the valid mode will
     '''
     def __init__(self, env_cfg) -> None:
         super().__init__(env_cfg);
@@ -73,8 +73,8 @@ class OpenaiEnv(Env):
             if glb_var.get_value('mode') == 'train':
                 self._resume_train_env();
     
-    def eval(self):
-        '''set eval mode
+    def valid(self):
+        '''set valid mode
         '''
         if self.is_training :
             self.is_training = False;

@@ -4,6 +4,7 @@
 from agent.algorithm import *
 from env import *
 from room.system.onpolicy import *
+from room.system.offpolicy import *
 from lib import glb_var
 
 __all__ = ['get_system']
@@ -32,5 +33,7 @@ def get_system(cfg):
     #Generating systems based on on-policy and off-policy algorithms
     if algorithm.is_onpolicy:
         return OnPolicySystem(cfg, algorithm, env);
+    elif not algorithm.is_onpolicy:
+        return OffPolicySystem(cfg, algorithm, env);
     else:
         pass

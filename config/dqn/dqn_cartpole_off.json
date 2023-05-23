@@ -26,16 +26,22 @@
                 0.999
             ]
         },
-        "lr_schedule_cfg":null,
+        "lr_schedule_cfg":{
+            "name":"StepLR",
+            "step_size":10,
+            "gamma":0.9995
+        },
         "memory_cfg":{
             "name":"OffPolicy",
             "max_size":10000,
             "batch_size":512,
             "sample_add_latest":true
         },
-        "train_exp_size":512,
         "max_epoch":100000,
-        "train_start_epoch":32
+        "train_start_epoch":32,
+        "expolre_max_step":128,
+        "train_times_per_epoch":4,
+        "batch_learn_times_per_train":8
     },
     "env":{
         "name":"CartPole",

@@ -24,7 +24,7 @@ class Env():
         '''train mode'''
         self.is_training = True;
     
-    def eval(self):
+    def valid(self):
         '''validation mode'''
         self.is_training = False;
 

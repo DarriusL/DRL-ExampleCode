@@ -17,7 +17,6 @@ class Sarsa(Algorithm):
     3.Loss:MSEloss
     4.Action Policy: epsilon greedy
     '''
-    #TODO:add notes
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #label for onpolicy algorithm
@@ -35,8 +34,10 @@ class Sarsa(Algorithm):
         self.var = self.var_schedule.var_start;
 
     def update(self):
-        '''Update epsilon for SARSA'''
+        '''Update epsilon and lr for SARSA'''
         self.var = self.var_schedule.step();
+        if self.lr_schedule is not None:
+            self.lr_schedule.step();
         glb_var.get_value('logger').debug(f'{self.name} epsilon:[{self.var}]');
 
     def cal_action_pd(self, state):
@@ -87,7 +88,7 @@ class Sarsa(Algorithm):
         q_tar_preds = batch['rewards'] + self.gamma * next_q_preds * (~ batch['dones']).to(torch.float32);
         return torch.nn.MSELoss()(q_preds.float(), q_tar_preds.float());
 
-    def train_epoch(self, batch):
+    def train_step(self, batch):
         '''training network
 
         Parameters:
@@ -105,8 +106,6 @@ class Sarsa(Algorithm):
         loss.backward();
         torch.nn.utils.clip_grad_norm_(self.q_net.parameters(), max_norm = 0.5);
         self.optimizer.step();
-        if self.lr_schedule is not None:
-            self.lr_schedule.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         return loss.item();

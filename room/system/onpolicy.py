@@ -15,11 +15,18 @@ class OnPolicySystem(System):
         self.loss = [];
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
+        self.max_total_rewards = -np.inf;
+        self.valid_not_imporve_cnt = 0;
+        self.best_solved = False;
+        self._init_sys();
+
+    def _init_sys(self):
+        '''System additional initialization functions'''
         if  not self.agent.memory.is_onpolicy:
             self.logger.error(f'Algorithm [{self.agent.algorithm.name}] is on-policy, while memory [{self.agent.memory}] is off-policy');
             raise callback.CustomException('PolicyConflict');
 
-    def _check_train_point(self):
+    def _check_train_point(self, epoch):
         '''Check if the conditions for a training session are met'''
         if len(self.agent.memory.states) == self.agent.train_exp_size:
             self.logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
@@ -28,9 +35,9 @@ class OnPolicySystem(System):
         else:
             return False;
 
-    def _check_done(self):
-        '''Check if the exploration of the current epoch is over'''
-        return True if self.env.is_terminated() else False;
+    def _check_valid_point(self, epoch):
+        '''Check if the conditions for a validation session are met'''
+        return (epoch + 1)%self.cfg['valid']['valid_step'] == 0;
 
     def _explore(self):
         '''Model Exploration Environment
@@ -43,12 +50,14 @@ class OnPolicySystem(System):
         '''
         state = self.env.get_state();
         while True:
-            action = self.agent.algorithm.act(state, self.env.is_training);
+            action = self.agent.algorithm.act(state, self.is_training);
             next_state, reward, done, _, _ = self.env.step(action);
             self.agent.memory.update(state, action, reward, next_state, done);
             #Check the conditions for exiting the environment
-            if self.env.is_training:
-                if self._check_train_point():
+            if self.is_training:
+                if self._check_train_point(None):
+                    if done:
+                        self.env.reset();
                     break;
                 elif done:
                     #not enough data collected
@@ -63,64 +72,74 @@ class OnPolicySystem(System):
         '''Save model
         '''
         torch.save(self.agent.algorithm, self.cfg['model_path']);
+    
+    def _train_epoch(self, epoch):
+        '''Model training per epoch
+        '''
+        batch = self.agent.memory.sample();
+        self.logger.debug(f'batch data:\n{batch}');
+        self.loss.append(self.agent.algorithm.train_step(batch));
+        self.logger.debug(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
+                    f'Epoch: [{epoch + 1}/{self.agent.max_epoch}] - train loss: [{self.loss[-1]:.8f}] - '
+                    f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n');
+
+    def _valid_epoch(self, epoch):
+        '''Model validation per epoch'''
+        total_rewards = 0;
+        rets_mean = 0;
+        for _ in range(self.cfg['valid']['valid_times']):
+            self.valid_mode();
+            self._explore();
+            batch = self.agent.memory.sample();
+            total_rewards += self.env.get_total_reward();
+            rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma).mean().item();
+            rets_mean += rm;
+        total_rewards /= self.cfg['valid']['valid_times'];
+        rets_mean /= self.cfg['valid']['valid_times'];
+        self.total_rewards_valid.append(total_rewards);
+        self.rets_mean_valid.append(rets_mean);
+        if total_rewards > self.max_total_rewards:
+            self._save()
+            self.max_total_rewards = total_rewards;
+            self.valid_not_imporve_cnt = 0;
+        elif total_rewards == self.max_total_rewards:
+            self._save();
+            self.valid_not_imporve_cnt += 1;
+        else:
+            self.valid_not_imporve_cnt += 1;
+        solved = total_rewards > self.env.solved_total_reward;
+        self.best_solved = self.max_total_rewards > self.env.solved_total_reward;
+        self.logger.info(f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - '
+                         f'Epoch:[{epoch + 1}] - lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'
+                        f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]'
+                        f'- solved(now/best): [{solved}/{self.best_solved}] - not_imporve_cnt: [{self.valid_not_imporve_cnt}]');
+        return (self.valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and self.best_solved) or \
+            (self.max_total_rewards >= self.env.finish_total_reward);
 
     def train(self):
-        '''Train the model
+        '''The main function to train the model
+
+        Notes:
+        ------
+        If you need to reuse the code, you only need to rewrite 
+        [_check_train_point, _check_valid_point, _explore, _train_epoch, _valid_epoch]. 
+        In general, the verification does not need to be rewritten.
         '''
-        max_total_rewards = -np.inf;
-        valid_not_imporve_cnt = 0;
         for epoch in range(self.agent.max_epoch):
-            loss_epoch = [];
-            #train
-            self.env.train();
+            #train mode
+            self.train_mode();
             self._explore();
-            #start to train
-            batch = self.agent.memory.sample();
-            self.logger.debug(f'batch data:\n{batch}');
-            loss = self.agent.algorithm.train_epoch(batch);
-            loss_epoch.append(loss);
-            self.loss.append(np.mean(loss_epoch));
-            self.logger.debug(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
-                        f'Epoch: [{epoch + 1}/{self.agent.max_epoch}] - train loss: [{self.loss[-1]:.8f}] - '
-                        f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n');
-            if self._check_done():
-                self.env.reset();
+            if self._check_train_point(epoch):
+                #start to train
+                self._train_epoch(epoch);
+            #algorithm update
             self.agent.algorithm.update();
-            #valid
-            total_rewards = 0;
-            rets_mean = 0;
-            best_solved = False;
-            if (epoch + 1)%self.cfg['valid']['valid_step'] == 0:
-                for _ in range(self.cfg['valid']['valid_times']):
-                    self.env.eval();
-                    self._explore();
-                    batch = self.agent.memory.sample();
-                    total_rewards += self.env.get_total_reward();
-                    rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma).mean().item();
-                    rets_mean += rm;
-                total_rewards /= self.cfg['valid']['valid_times'];
-                rets_mean /= self.cfg['valid']['valid_times'];
-                self.total_rewards_valid.append(total_rewards);
-                self.rets_mean_valid.append(rets_mean);
-                if total_rewards > max_total_rewards:
-                    self._save()
-                    max_total_rewards = total_rewards;
-                    valid_not_imporve_cnt = 0;
-                elif total_rewards == max_total_rewards:
-                    self._save();
-                    valid_not_imporve_cnt += 1;
-                else:
-                    valid_not_imporve_cnt += 1;
-                solved = total_rewards > self.env.solved_total_reward;
-                best_solved = max_total_rewards > self.env.solved_total_reward;
-                self.logger.info(f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - epoch:[{epoch + 1}]\n'
-                            f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{max_total_rewards}]'
-                            f'- solved(now/best): [{solved}/{best_solved}] - not_imporve_cnt: [{valid_not_imporve_cnt}]');
-                if (valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and best_solved) or \
-                    (max_total_rewards >= self.env.finish_total_reward):
-                    break
+            #valid mode
+            if self._check_valid_point(epoch):
+                if self._valid_epoch(epoch):
+                    break;
             self._check_mode();
-        self.logger.info(f'Saved Model Information:\nSolved: [{best_solved}] - Mean total rewards: [{max_total_rewards}]'
+        self.logger.info(f'Saved Model Information:\nSolved: [{self.best_solved}] - Mean total rewards: [{self.max_total_rewards}]'
                          f'\nSaved path:{self.save_path}');
         #plot rets
         util.single_plot(
@@ -138,6 +157,7 @@ class OnPolicySystem(System):
         )
 
     def test(self):
-        self.env.eval()
+        '''Test the model'''
+        self.valid_mode();
         self._explore()
 

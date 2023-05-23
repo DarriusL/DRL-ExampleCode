@@ -23,6 +23,12 @@ class OnPolicyMemory(Memory):
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
         self.reset();
+    
+    def train(self):
+        pass
+
+    def valid(self):
+        pass
 
     def reset(self):
         '''Clear all experience storage memory
