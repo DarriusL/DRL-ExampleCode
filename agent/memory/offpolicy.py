@@ -51,7 +51,7 @@ class OffPolicyMemory(Memory):
         if self.sample_add_latest:
             #Add latest experience
             batch_sample[-1] = self.exp_latest;
-        batch_sample = zip(*batch_sample);
+        batch_sample = tuple(zip(*batch_sample));
         batch = {}
         for idx, key in enumerate(self.exp_keys):
             batch[key] = np.array(batch_sample[idx]);
