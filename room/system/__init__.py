@@ -9,6 +9,7 @@ from lib import glb_var
 __all__ = ['get_system']
 
 def get_system(cfg):
+    '''Generate systems according to on-policy and off-policy'''
     #env
     env = get_env(cfg['env']);
     #action_dim : numbers of all actions

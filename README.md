@@ -73,7 +73,11 @@ conda activate dev
 
 ```shell
 usage: executor.py [-h] [--config CONFIG] [--mode MODE] [--dev DEV]
+```
 
+### option
+
+```shell
 options:
   -h, --help            show this help message and exit
   --config CONFIG, -cfg CONFIG

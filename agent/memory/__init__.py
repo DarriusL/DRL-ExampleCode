@@ -2,6 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.memory.onpolicy import *
+from agent.memory.offpolicy import *
 from lib import glb_var, callback
 
 def get_memory(mmy_cfg):
@@ -11,6 +12,8 @@ def get_memory(mmy_cfg):
         return OnPolicyMemory(mmy_cfg);
     elif mmy_cfg['name'].lower() in ['onpolicybatch', 'onpolicybatchmemory']:
         return OnPolicyBatchMemory(mmy_cfg);
+    elif mmy_cfg['name'].lower() in ['ooffpolicy', 'offpolicymemory']:
+        return OffPolicyMemory(mmy_cfg);
     else:
         glb_var.get_value('logger').error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');

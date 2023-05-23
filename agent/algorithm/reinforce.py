@@ -9,6 +9,12 @@ import torch
 
 class Reinforce(Algorithm):
     '''Implementation of REINFORCE
+    
+    Notes:
+    ------
+    1.OnPolicy Algorithm
+    2.Experience can only be gained using Monte Carlo simulation sampling
+    3.loss:policy grad
     '''
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
@@ -23,9 +29,6 @@ class Reinforce(Algorithm):
         self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
-
-    def update(self):
-        pass
 
     def cal_action_pd(self, state):
         '''

@@ -6,9 +6,18 @@ from agent.algorithm.base import Algorithm
 from agent.algorithm import alg_util
 from lib import glb_var
 import torch
-import numpy as np
 
 class Sarsa(Algorithm):
+    '''State-Action-Reward-State-Action algorithm
+    
+    Notes:
+    ------
+    1.OnPolicy algorithm.
+    2.The data sampling method can be selected between Monte Carlo sampling and nstep.
+    3.Loss:MSEloss
+    4.Action Policy: epsilon greedy
+    '''
+    #TODO:add notes
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #label for onpolicy algorithm
@@ -23,12 +32,12 @@ class Sarsa(Algorithm):
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
         self.var_schedule = alg_util.VarScheduler(var_schedule_cfg);
-        self.epsilon = self.var_schedule.var_start;
+        self.var = self.var_schedule.var_start;
 
     def update(self):
         '''Update epsilon for SARSA'''
-        self.epsilon = self.var_schedule.step();
-        glb_var.get_value('logger').debug(f'epsilon:[{self.epsilon}]');
+        self.var = self.var_schedule.step();
+        glb_var.get_value('logger').debug(f'{self.name} epsilon:[{self.var}]');
 
     def cal_action_pd(self, state):
         '''
@@ -59,7 +68,7 @@ class Sarsa(Algorithm):
         #the logarithm of the action probability distribution
         action_logit = self.q_net(torch.from_numpy(state).to(torch.float32).to(glb_var.get_value('device')));
         if is_training:
-            action = self.action_strategy(action_logit, self.epsilon);
+            action = self.action_strategy(action_logit, self.var);
         else:
             action = alg_util.action_default(action_logit);
         return action.cpu().item();

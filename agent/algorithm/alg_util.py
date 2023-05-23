@@ -84,8 +84,28 @@ def action_random(action_logit):
 def action_epsilon_greedy(action_logit, epsilon):
     '''epsilon greedy
 
+    Parameters:
+    -----------
+    action_logit:torch.Tensor
+        [..., action_dim]
+
+    Notes:
+    ------
+    Greedy selection with epsilon probability, random selection with 1-epsilon probability
     '''
     if np.random.random() > epsilon:
         return action_default(action_logit);
     else:
         return action_random(action_logit);
+
+def action_boltzmann(action_logit, tau):
+    '''boltzmann policy
+
+    Parameters:
+    -----------
+    action_logit:torch.Tensor
+        [..., action_dim]
+    '''
+    action_logit = action_logit / tau;
+    action_logit = torch.nn.Softmax(action_logit);
+    return action_default(action_logit);

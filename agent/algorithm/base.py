@@ -22,8 +22,7 @@ class Algorithm():
             raise callback.CustomException('ValueError');
 
     def updata(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
-        raise NotImplementedError;
+        pass;
 
     def cal_action_pd(self):
         '''Calculating Action Distribution Parameters'''
