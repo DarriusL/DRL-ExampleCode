@@ -15,6 +15,7 @@ class OnPolicyMemory(Memory):
     '''
     def __init__(self, memory_cfg) -> None:
         super().__init__(memory_cfg);
+        self.is_onpolicy = True;
         #Existing data in memory
         self.stock = 0;
         #Suitable for episodic environments

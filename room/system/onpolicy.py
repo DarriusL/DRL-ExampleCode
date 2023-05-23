@@ -2,7 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.algorithm import *
-from lib import util
+from lib import util, callback
 from room.system.base import System
 import numpy as np
 import torch
@@ -15,6 +15,9 @@ class OnPolicySystem(System):
         self.loss = [];
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
+        if  not self.agent.memory.is_onpolicy:
+            self.logger.error(f'Algorithm [{self.agent.algorithm.name}] is on-policy, while memory [{self.agent.memory}] is off-policy');
+            raise callback.CustomException('PolicyConflict');
 
     def _check_train_point(self):
         '''Check if the conditions for a training session are met'''
@@ -128,7 +131,7 @@ class OnPolicySystem(System):
         util.single_plot(
             np.arange(self.cfg['valid']['valid_step'] - 1, epoch + 1, self.cfg['valid']['valid_step']) + 1,
             self.total_rewards_valid,
-            'epoch', 'mean_rets', self.save_path + '/rewards.png');
+            'epoch', 'rewards', self.save_path + '/rewards.png');
         #plot loss
         util.single_plot(
             np.arange(len(self.loss)), self.loss, 'epoch', 'loss', self.save_path + '/loss.png'

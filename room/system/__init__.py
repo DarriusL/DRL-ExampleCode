@@ -3,7 +3,7 @@
 # @Email  : darrius.lei@outlook.com
 from agent.algorithm import *
 from env import *
-from room.system.onpolicy_system import *
+from room.system.onpolicy import *
 from lib import glb_var
 
 __all__ = ['get_system']

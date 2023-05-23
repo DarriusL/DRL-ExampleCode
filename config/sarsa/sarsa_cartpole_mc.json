@@ -7,7 +7,7 @@
                 "var_start":1.0,
                 "var_end":0.05,
                 "star_epoch":0,
-                "end_epoch":8000
+                "end_epoch":80000
             },
             "gamma": 0.99
         },

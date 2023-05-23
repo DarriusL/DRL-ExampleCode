@@ -81,11 +81,11 @@ class Sarsa(Algorithm):
         with torch.no_grad():
             next_q_preds_table = self.q_net(batch['next_states']);
         #[T]
-        q_pred = q_preds_table.gather(-1, batch['actions'].unsqueeze(-1)).squeeze(-1);
+        q_preds = q_preds_table.gather(-1, batch['actions'].unsqueeze(-1)).squeeze(-1);
         #[T]
         next_q_preds = next_q_preds_table.gather(-1, batch['next_actions'].unsqueeze(-1)).squeeze(-1);
         q_tar_preds = batch['rewards'] + self.gamma * next_q_preds * (~ batch['dones']).to(torch.float32);
-        return torch.nn.MSELoss()(q_pred.float(), q_tar_preds.float());
+        return torch.nn.MSELoss()(q_preds.float(), q_tar_preds.float());
 
     def train_epoch(self, batch):
         '''training network

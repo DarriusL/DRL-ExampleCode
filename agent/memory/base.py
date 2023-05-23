@@ -10,6 +10,7 @@ class Memory():
         util.set_attr(self, memory_cfg);
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
+        self.is_onpolicy = None;
 
     def _batch_to_tensor(self):
         '''Convert a batch to a format for torch training'''

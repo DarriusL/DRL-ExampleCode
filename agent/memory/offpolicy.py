@@ -2,39 +2,33 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.memory.base import Memory
+from collections import deque;
 from lib import glb_var
 import numpy as np
-import torch
+import torch, copy, random
 
 class OffPolicyMemory(Memory):
     '''Memory for off policy algorithm, experience is stored according to batch'''
     def __init__(self, memory_cfg) -> None:
         super().__init__(memory_cfg);
+        self.is_onpolicy = False;
         #Existing data in memory
-        self.stock = 0;
         self.is_episodic_exp = False;
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
-        #the index for latest experience, -1 for empty
-        self.idx = -1;
+        self.repository = deque(maxlen = self.max_size)
         self.reset();
 
     def reset(self):
         '''Reset(Clear) the memory'''
-        for key in self.exp_keys:
-            setattr(self, key, [None] * self.max_size);
+        self.repository.clear();
         self.exp_latest = [None] * 5;
-        self.stock = 0;
-        self.idx = -1;
+
 
     def update(self, state, action, reward, next_state, done):
         '''Add experience to the memory'''
-        self.idx = (self.idx + 1) % self.max_size;
         self.exp_latest = [state, action, reward, next_state, done];
-        for idx, key in enumerate(self.exp_keys):
-            getattr(self, key)[self.idx] = self.exp_latest[idx];
-        if self.stock < self.max_size:
-            self.stock += 1;
+        self.repository.append(copy.deepcopy(self.exp_latest));
     
     def _batch_to_tensor(self, batch):
         '''Convert a batch to a format for torch training
@@ -51,8 +45,15 @@ class OffPolicyMemory(Memory):
 
     def sample(self):
         '''sample data'''
-        batch = {};
-        batch_idxs = np.random.randint(0, self.stock, size = (self.batch_size));
-        for key in self.exp_keys:
-            batch[key] = np.array(getattr(self, key))[batch_idxs];
+        if self.batch_size > len(self.repository):
+            return None;
+        batch_sample = random.sample(self.repository, self.batch_size);
+        if self.sample_add_latest:
+            #Add latest experience
+            batch_sample[-1] = self.exp_latest;
+        batch_sample = zip(*batch_sample);
+        batch = {}
+        for idx, key in enumerate(self.exp_keys):
+            batch[key] = np.array(batch_sample[idx]);
+
         return self._batch_to_tensor(batch)
