@@ -105,3 +105,9 @@ python executor.py -cfg='./config/sarsa/sarsa_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./cache/data/sarsa/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
+dqn
+
+```shell
+python executor.py -cfg='./config/dqn/dqn_cartpole_off.json' --mode='train'
+```
+

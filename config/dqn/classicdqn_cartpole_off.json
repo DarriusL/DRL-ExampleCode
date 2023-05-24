@@ -13,7 +13,7 @@
         },
         "net_cfg":{
             "name":"MLPNet",
-            "hid_layers":[32, 16],
+            "hid_layers":[64],
             "hid_layers_activation":"Selu"
         },
         "optimizer_cfg":{
@@ -26,22 +26,18 @@
                 0.999
             ]
         },
-        "lr_schedule_cfg":{
-            "name":"StepLR",
-            "step_size":10,
-            "gamma":0.9995
-        },
+        "lr_schedule_cfg":null,
         "memory_cfg":{
             "name":"OffPolicy",
             "max_size":10000,
-            "batch_size":512,
+            "batch_size":128,
             "sample_add_latest":true
         },
         "max_epoch":100000,
-        "train_start_epoch":32,
-        "expolre_max_step":128,
-        "train_times_per_epoch":4,
-        "batch_learn_times_per_train":8
+        "train_start_epoch":2,
+        "expolre_max_step":64,
+        "train_times_per_epoch":16,
+        "batch_learn_times_per_train":2
     },
     "env":{
         "name":"CartPole",
@@ -51,7 +47,7 @@
     },
     "model_path":null,
     "valid":{
-        "valid_step":100,
+        "valid_step":25,
         "valid_times":5,
         "not_improve_finish_step":5
     }

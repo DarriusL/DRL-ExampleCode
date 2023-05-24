@@ -28,7 +28,7 @@ class ClassicDQN(Sarsa):
         self.var = self.var_schedule.step();
         if (self.lr_schedule is not None) and self.is_train_point:
             self.lr_schedule.step();
-            self.is_train_point = True;
+            self.is_train_point = False;
         glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
 
     def cal_loss(self, batch):
@@ -62,8 +62,6 @@ class ClassicDQN(Sarsa):
         loss.backward();
         torch.nn.utils.clip_grad_norm_(self.q_net.parameters(), max_norm = 0.5);
         self.optimizer.step();
-        if self.lr_schedule is not None:
-            self.lr_schedule.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         return loss.item();
