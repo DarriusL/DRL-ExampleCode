@@ -108,6 +108,7 @@ python executor.py -cfg='./cache/data/sarsa/cartpole/[-opt-]/config.json' --mode
 dqn
 
 ```shell
-python executor.py -cfg='./config/dqn/classicdqn_cartpole_off.json' --mode='train'
+python executor.py -cfg='./config/dqn/dqn_cartpole_off.json' --mode='train'
+python executor.py -cfg='./config/dqn/targetdqn_cartpole_off.json' --mode='train'
 ```
 

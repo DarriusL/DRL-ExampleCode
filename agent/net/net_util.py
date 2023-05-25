@@ -105,7 +105,7 @@ class NetUpdater():
             tgt = beta * tgt + (1- beta)*src
         '''
         for src_param, tgt_param in zip(src.parameters(), tgt.parameters()):
-            tgt.data.copy_(self.beta*tgt_param.data + (1 - self.beta)*src_param.data);
+            tgt_param.data.copy_(self.beta*tgt_param.data + (1 - self.beta)*src_param.data);
 
     def update(self):
         self.epoch += 1;
