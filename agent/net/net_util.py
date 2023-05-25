@@ -2,8 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 import torch
-from lib import callback, glb_var
-from agent import net
+from lib import callback, glb_var, util
 from agent.net import *
 
 def get_optimizer(optim_cfg, net):
@@ -73,3 +72,43 @@ def get_activation_fn(name = 'selu'):
         glb_var.get_value('logger').error(f'Activation function [{name.lower()}] does not support automatic acquisition at the moment,'
                                         f'please replace or add the code yourself.\nSupport list:{activations}');
         raise callback.CustomException('ActivationCfgNameError');
+
+class NetUpdater():
+    '''for updating the network'''
+    def __init__(self, net_update_cfg) -> None:
+        util.set_attr(self, net_update_cfg, except_type = dict);
+        self.epoch = 0;
+        #generate net update policy
+        if self.name.lower() == 'replace':
+            self.updater = self.net_param_copy;
+        elif self.name.lower() == 'polyak':
+            self.updater = self.net_param_polyak_update;
+        else:
+            glb_var.get_value('logger').error(f'Unsupported type {self.name}, '
+                                              'implement it yourself or replace it with [replace, polyak]');
+
+    def set_net(self, src, tgt):
+        ''''''
+        self.src_net = src;
+        self.tgt_net = tgt;
+
+    def net_param_copy(self, src, tgt):
+        '''Copy network parameters from src to tgt'''
+        tgt.load_state_dict(src.state_dict());
+
+    def net_param_polyak_update(self, src, tgt):
+        '''Polyak updata policy
+        
+        Parameters:
+        ----------
+        beta:coefficient of network update
+            tgt = beta * tgt + (1- beta)*src
+        '''
+        for src_param, tgt_param in zip(src.parameters(), tgt.parameters()):
+            tgt.data.copy_(self.beta*tgt_param.data + (1 - self.beta)*src_param.data);
+
+    def update(self):
+        self.epoch += 1;
+        if self.epoch % self.update_step == 0:
+            self.updater(self.src_net, self.tgt_net);
+            glb_var.get_value('logger').debug('Net update.')

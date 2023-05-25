@@ -22,7 +22,7 @@ class Reinforce(Algorithm):
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_default;
 
-    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, var_schedule_cfg, in_dim, out_dim, max_epoch):
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
         self.pi = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));

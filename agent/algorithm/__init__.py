@@ -16,8 +16,10 @@ def get_alg(alg_cfg):
             return Reinforce(alg_cfg);
         elif alg_cfg['name'].lower() == 'sarsa':
             return Sarsa(alg_cfg);
-        elif alg_cfg['name'].lower() == 'classicdqn':
-            return ClassicDQN(alg_cfg);
+        elif alg_cfg['name'].lower() == 'dqn':
+            return DQN(alg_cfg);
+        elif alg_cfg['name'].lower() == 'targetdqn':
+            return TargetDQN(alg_cfg);
         else:
             glb_var.get_value('logger').error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');

@@ -1,0 +1,61 @@
+{
+    "agent_cfg":{
+        "algorithm_cfg":{
+            "name":"TargetDQN",
+            "var_schedule_cfg":{
+                "name":"linear",
+                "var_start":5.0,
+                "var_end":0.05,
+                "star_epoch":0,
+                "end_epoch":10000
+            },
+            "gamma": 0.99,
+            "net_updte_cfg":{
+                "name":"replace",
+                "update_step":10
+            }
+        },
+        "net_cfg":{
+            "name":"MLPNet",
+            "hid_layers":[64],
+            "hid_layers_activation":"Selu"
+        },
+        "optimizer_cfg":{
+            "name":"adam",
+            "lr":1e-2,
+            "weight_decay": 1e-08,
+            "betas": [
+                0.9,
+                0.999
+            ]
+        },
+        "lr_schedule_cfg":{
+            "name":"StepLR",
+            "step_size":10,
+            "gamma":0.997
+        },
+        "memory_cfg":{
+            "name":"OffPolicy",
+            "max_size":10000,
+            "batch_size":128,
+            "sample_add_latest":false
+        },
+        "max_epoch":20000,
+        "train_start_epoch":2,
+        "expolre_max_step":64,
+        "train_times_per_epoch":16,
+        "batch_learn_times_per_train":2
+    },
+    "env":{
+        "name":"CartPole",
+        "solved_total_reward":99900,
+        "finish_total_reward":100000,
+        "survival_T":100000
+    },
+    "model_path":null,
+    "valid":{
+        "valid_step":10,
+        "valid_times":5,
+        "not_improve_finish_step":5
+    }
+}

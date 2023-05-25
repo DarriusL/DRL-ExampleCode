@@ -25,7 +25,6 @@ def get_system(cfg):
             cfg['agent_cfg']['net_cfg'],
             cfg['agent_cfg']['optimizer_cfg'],
             cfg['agent_cfg']['lr_schedule_cfg'],
-            cfg['agent_cfg']['algorithm_cfg']['var_schedule_cfg'],
             state_dim,
             action_dim,
             cfg['agent_cfg']['max_epoch']

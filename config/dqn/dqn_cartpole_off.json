@@ -1,13 +1,13 @@
 {
     "agent_cfg":{
         "algorithm_cfg":{
-            "name":"ClassicDQN",
+            "name":"DQN",
             "var_schedule_cfg":{
                 "name":"linear",
-                "var_start":1.0,
+                "var_start":5.0,
                 "var_end":0.05,
                 "star_epoch":0,
-                "end_epoch":80000
+                "end_epoch":10000
             },
             "gamma": 0.99
         },
@@ -19,21 +19,24 @@
         "optimizer_cfg":{
             "name":"adam",
             "lr":1e-2,
-            "alpha":0.9,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
                 0.999
             ]
         },
-        "lr_schedule_cfg":null,
+        "lr_schedule_cfg":{
+            "name":"StepLR",
+            "step_size":10,
+            "gamma":0.997
+        },
         "memory_cfg":{
             "name":"OffPolicy",
             "max_size":10000,
             "batch_size":128,
-            "sample_add_latest":true
+            "sample_add_latest":false
         },
-        "max_epoch":100000,
+        "max_epoch":20000,
         "train_start_epoch":2,
         "expolre_max_step":64,
         "train_times_per_epoch":16,
@@ -47,7 +50,7 @@
     },
     "model_path":null,
     "valid":{
-        "valid_step":25,
+        "valid_step":10,
         "valid_times":5,
         "not_improve_finish_step":5
     }
