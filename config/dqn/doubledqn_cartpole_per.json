@@ -1,7 +1,7 @@
 {
     "agent_cfg":{
         "algorithm_cfg":{
-            "name":"TargetDQN",
+            "name":"DoubleDQN",
             "var_schedule_cfg":{
                 "name":"linear",
                 "var_start":5.0,
@@ -13,17 +13,17 @@
             "net_updte_cfg":{
                 "name":"polyak",
                 "beta":0.5,
-                "update_step":50
+                "update_step":10
             }
         },
         "net_cfg":{
             "name":"MLPNet",
-            "hid_layers":[64],
+            "hid_layers":[32, 16],
             "hid_layers_activation":"Selu"
         },
         "optimizer_cfg":{
             "name":"adam",
-            "lr":1e-2,
+            "lr":2e-3,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
@@ -32,10 +32,14 @@
         },
         "lr_schedule_cfg":null,
         "memory_cfg":{
-            "name":"OffPolicy",
+            "name":"PER",
             "max_size":10000,
             "batch_size":128,
-            "sample_add_latest":false
+            "sample_add_latest":false,
+            "sumtree_cfg":{
+                "capacity":10000,
+                "single_update":false
+            }
         },
         "max_epoch":20000,
         "train_start_epoch":2,
@@ -51,7 +55,7 @@
     },
     "model_path":null,
     "valid":{
-        "valid_step":100,
+        "valid_step":10,
         "valid_times":5,
         "not_improve_finish_step":5
     }

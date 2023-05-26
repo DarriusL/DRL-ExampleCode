@@ -110,5 +110,6 @@ dqn
 ```shell
 python executor.py -cfg='./config/dqn/dqn_cartpole_off.json' --mode='train'
 python executor.py -cfg='./config/dqn/targetdqn_cartpole_off.json' --mode='train'
+python executor.py -cfg='./config/dqn/doubledqn_cartpole_off.json' --mode='train'
 ```
 

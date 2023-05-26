@@ -14,7 +14,7 @@ class Memory():
     3. Due to its particularity (it will be cleared after each sampling), the on-policy memory can be used directly
     '''
     def __init__(self, memory_cfg) -> None:
-        util.set_attr(self, memory_cfg);
+        util.set_attr(self, memory_cfg, except_type = dict);
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
         self.is_onpolicy = None;
