@@ -20,6 +20,8 @@ def get_alg(alg_cfg):
             return DQN(alg_cfg);
         elif alg_cfg['name'].lower() == 'targetdqn':
             return TargetDQN(alg_cfg);
+        elif alg_cfg['name'].lower() == 'doubledqn':
+            return DoubleDQN(alg_cfg);
         else:
             glb_var.get_value('logger').error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');

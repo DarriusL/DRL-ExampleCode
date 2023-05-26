@@ -32,6 +32,9 @@ class Sarsa(Algorithm):
         self.optimizer = net_util.get_optimizer(optim_cfg, self.q_net);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
+        #Used in DQN
+        self.q_target_net = None;
+        self.q_eval_net = None;
 
     def update(self):
         '''Update epsilon and lr for SARSA'''

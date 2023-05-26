@@ -23,18 +23,14 @@
         },
         "optimizer_cfg":{
             "name":"adam",
-            "lr":1e-3,
+            "lr":2e-3,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
                 0.999
             ]
         },
-        "lr_schedule_cfg":{
-            "name":"StepLR",
-            "step_size":10,
-            "gamma":0.997
-        },
+        "lr_schedule_cfg":null,
         "memory_cfg":{
             "name":"OffPolicy",
             "max_size":10000,
@@ -44,7 +40,7 @@
         "max_epoch":20000,
         "train_start_epoch":2,
         "expolre_max_step":64,
-        "train_times_per_epoch":4,
+        "train_times_per_epoch":16,
         "batch_learn_times_per_train":2
     },
     "env":{
