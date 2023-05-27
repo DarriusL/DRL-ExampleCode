@@ -33,13 +33,11 @@
         "lr_schedule_cfg":null,
         "memory_cfg":{
             "name":"PER",
-            "max_size":10000,
+            "epsilon":1e-5,
+            "eta":0.6,
+            "max_size":16384,
             "batch_size":128,
-            "sample_add_latest":false,
-            "sumtree_cfg":{
-                "capacity":10000,
-                "single_update":false
-            }
+            "sample_add_latest":false
         },
         "max_epoch":20000,
         "train_start_epoch":2,
