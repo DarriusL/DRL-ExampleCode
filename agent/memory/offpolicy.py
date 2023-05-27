@@ -3,7 +3,7 @@
 # @Email  : darrius.lei@outlook.com
 from agent.memory.base import Memory
 from agent.memory.onpolicy import OnPolicyMemory
-from collections import deque;
+from collections import deque
 from lib import glb_var, util
 import numpy as np
 import torch, copy, random
@@ -77,10 +77,9 @@ class OffPolicyMemory(Memory):
 
 class SumTree():
     ''''''
-    def __init__(self, sumtree_cfg) -> None:
-        util.set_attr(self, sumtree_cfg);
+    def __init__(self, capacity) -> None:
+        self.capacity = capacity;
         self.check_capacity();
-        self.stock = 0;
         self.write_idx = 0;
         self.tree_data = np.zeros(2 * self.capacity - 1);
         self.node_data = np.zeros(self.capacity);
@@ -115,18 +114,42 @@ class SumTree():
         if(parent_idx != 0):
             self._propagate(parent_idx, change);
 
-    def add(self, nd, td):
-        ''''''
+    def add_node(self, nd, td, update = True):
+        '''Add a single node to the tree'''
         idx = self.write_idx + self.capacity - 1;
         self.node_data[self.write_idx] = nd;
         self.write_idx += 1;
         if self.write_idx >= self.capacity:
             self.write_idx = 0;
         #if set to update every single time
-        if self.single_update:
+        if update:
             change = td - self.tree_data[idx];
             self._propagate(idx, change);
         self.tree_data[idx] = td;
+    
+    def add_nodes(self, nds, tds, update = True):
+        '''Add nodes to the tree
+
+        Parameters:
+        -----------
+        nds:list
+
+        tds:list
+        '''
+        assert len(nds) == len(tds);
+        num = len(nds);
+        nds = np.array(nds);
+        tds = np.array(tds);
+        write_idxs = np.arange(self.write_idx, self.write_idx + num, dtype = np.int32);
+        write_idxs[write_idxs >= self.capacity] -= self.capacity;
+        tree_write_idxs = write_idxs + self.capacity - 1;
+        self.node_data[write_idxs] = nds;
+        self.tree_data[tree_write_idxs] = tds;
+        if update:
+            self.update_tree();
+        self.write_idx += num;
+        if self.write_idx >= self.capacity:
+            self.write_idx -= self.capacity;
 
     def _retrieve(self, idx, td_ref):
         ''''''
@@ -150,17 +173,17 @@ class SumTree():
     def update_tree(self):
         ''''''
         def __half(a):
-            return np.arange(a[0] // 2, a[0] // 2 + 0.5*len(a), dtype = np.int64);
+            return np.arange(a[0] // 2, a[0] // 2 + 0.5*len(a), dtype = np.int32);
         def __near_2_add(data):
             return data[0:len(data):2] + data[1:len(data):2];
-        if not self.single_update:
-            #update tree
-            times = len(bin(self.capacity)) - 3;
-            idxs = np.arange(self.capacity - 1, 2 * self.capacity - 1, dtype = np.int64);
+
+        #update tree
+        times = len(bin(self.capacity)) - 3;
+        idxs = np.arange(self.capacity - 1, 2 * self.capacity - 1, dtype = np.int32);
+        idxs_parent = __half(idxs);
+        for _ in range(times):
+            self.tree_data[idxs_parent] = __near_2_add(self.tree_data[idxs]);
+            idxs = idxs_parent;
             idxs_parent = __half(idxs);
-            for _ in range(times):
-                self.tree_data[idxs_parent] = __near_2_add(self.tree_data[idxs]);
-                idxs = idxs_parent;
-                idxs_parent = __half(idxs);
 
 
