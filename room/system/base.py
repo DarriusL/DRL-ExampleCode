@@ -29,6 +29,7 @@ class System():
             json_util.jsonsave(self.cfg, self.save_path + '/config.json'); 
         memory = get_memory(cfg['agent_cfg']['memory_cfg']);
         self.agent = Agent(memory, algorithm);
+        glb_var.set_value('agent', self.agent)
         util.set_attr(self.agent, cfg['agent_cfg'], except_type = dict)
         self.env.reset();
 

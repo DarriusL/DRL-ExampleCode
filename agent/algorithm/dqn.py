@@ -4,6 +4,7 @@
 from agent.algorithm.sarsa import Sarsa
 from agent.algorithm import alg_util
 from agent.net import *
+from agent.memory.offpolicy import PrioritizedMemory
 from lib import glb_var
 import torch
 
@@ -49,8 +50,15 @@ class DQN(Sarsa):
         q_preds = q_preds_table.gather(-1, batch['actions'].unsqueeze(-1)).squeeze(-1);
         #[batch_size, 1]
         eval_action = eval_next_q_preds_table.argmax(dim = -1, keepdim = True);
+        #[batch_size]
         max_next_q_pred = next_q_preds_table.gather(-1, eval_action).squeeze(-1);
         q_tar_preds = batch['rewards'] + self.gamma * max_next_q_pred * (~ batch['dones']).to(torch.float32);
+        #If memory is PER, update the priority of the current batch
+        mmy = glb_var.get_value('agent').memory;
+        if isinstance(mmy, PrioritizedMemory):
+            omegas = (q_preds.detach() - q_tar_preds.detach()).cpu().tolist();
+            mmy.update_priorities(omegas);
+
         return torch.nn.MSELoss()(q_preds.float(), q_tar_preds.float());
 
     def train_step(self, batch):

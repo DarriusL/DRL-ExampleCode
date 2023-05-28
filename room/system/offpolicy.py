@@ -47,6 +47,7 @@ class OffPolicySystem(OnPolicySystem):
         while True:
             action = self.agent.algorithm.act(state, self.is_training);
             next_state, reward, done, _, _ = self.env.step(action);
+            #For PER, use the default omega value (a large constant) to encourage sampling each experience at least once
             self.agent.memory.update(state, action, reward, next_state, done);
             #Check the conditions for exiting the environment
             if self.is_training:
