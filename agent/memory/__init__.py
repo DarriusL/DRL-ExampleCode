@@ -14,6 +14,8 @@ def get_memory(mmy_cfg):
         return OnPolicyBatchMemory(mmy_cfg);
     elif mmy_cfg['name'].lower() in ['offpolicy', 'offpolicymemory']:
         return OffPolicyMemory(mmy_cfg);
+    elif mmy_cfg['name'].lower() in ['per', 'prioritizedmemory']:
+        return PrioritizedMemory(mmy_cfg);
     else:
         glb_var.get_value('logger').error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');

@@ -77,7 +77,8 @@ class OffPolicyMemory(Memory):
             return self.valid_mmy.sample();
 
 class SumTree():
-    ''''''
+    '''Sum Tree algorithm for PER
+    '''
     def __init__(self, capacity) -> None:
         self.capacity = capacity;
         self.check_capacity();
@@ -86,13 +87,14 @@ class SumTree():
         self.node_data = np.zeros(self.capacity, dtype = np.int32);
         
     def check_capacity(self):
-        #Must be a full binary tree, that is, the capacity must be an integer power of 2
+        '''Must be a full binary tree, that is, the capacity must be an integer power of 2'''
         capacity = round(self.capacity);
         if capacity & (capacity - 1) == 0:
             self.capacity = capacity;
             return;
         glb_var.get_value('logger').warn('The tree capacity needs to be an integer power of 2, '
                                          'it will be automatically adjusted or canceled to reset');
+        #Calculates the nearest power of 2 to the capacity
         power_bin_capacity = len(bin(capacity)) - 2;
         power_bin = np.array([power_bin_capacity - 1, power_bin_capacity, power_bin_capacity + 1]);
         capacity_near = 2 ** power_bin;
@@ -100,29 +102,37 @@ class SumTree():
         glb_var.get_value('logger').info(f'The tree capacity will be reset to {self.capacity}');
     
     def get_latest_idx(self):
-        ''''''
+        '''Get the tree index of the last added data'''
         node_idx = (self.write_idx - 1)%self.capacity;
         tree_idx = node_idx + self.capacity - 1;
         return tree_idx;
 
     def get_root(self):
-        ''''''
-        return self.NodeData[0];
+        '''Get the total value of the tree'''
+        return self.tree_data[0];
     
     def get_capacity(self):
-        ''''''
+        '''Get the capacity of the tree'''
         return self.capacity;
 
     def _propagate(self, idx, change):
-        ''''''
-        # Pass updates to parent node
+        '''Pass updates to parent node
+        
+        Parameters:
+        -----------
+        idx:int
+            tree idx
+
+        change:float
+            Changed value of tree node 
+        '''
         parent_idx = (idx - 1) // 2;
         self.tree_data[parent_idx] += change;
         if(parent_idx != 0):
             self._propagate(parent_idx, change);
     
     def node_update(self, idx, td):
-        ''''''
+        '''node-level update'''
         change = td - self.tree_data[idx];
         self.tree_data[idx] = td;
         self._propagate(idx, change);
@@ -161,26 +171,26 @@ class SumTree():
         self.write_idx = (self.write_idx + num)%self.capacity;
 
     def _retrieve(self, idx, td_ref):
-        ''''''
+        '''retrieve tree idx'''
         idx_left = idx * 2 + 1;
         idx_right = idx_left + 1;
         if idx_left >= len(self.tree_data):
             return idx;
 
         if td_ref <= self.tree_data[idx_left]:
-            return self.retrieve_sgnode(idx_left, td_ref);
+            return self._retrieve(idx_left, td_ref);
         else:
-            return self.retrieve_sgnode(idx_right, td_ref - self.tree_data[idx_left]);
+            return self._retrieve(idx_right, td_ref - self.tree_data[idx_left]);
 
     def fetch(self, td_ref):
-        ''''''
+        '''retrieve api'''
         if td_ref > self.get_root():
             return None;
         tree_read_idx = self._retrieve(0, td_ref);
-        return tree_read_idx, self.node_data[tree_read_idx - self.capacity + 1];
+        return self.node_data[tree_read_idx - self.capacity + 1], tree_read_idx;
 
     def _update_tree(self):
-        ''''''
+        '''Update the whole tree'''
         def __half(a):
             return np.arange(a[0] // 2, a[0] // 2 + 0.5*len(a), dtype = np.int32);
         def __near_2_add(data):
@@ -233,7 +243,6 @@ class PrioritizedMemory(Memory):
             setattr(self, key, [None]*self.max_size);
     
     def _cal_priority(self, omega):
-        ''''''
         return (np.abs(omega) + self.epsilon) ** self.eta;
 
     def update(self, state, action, reward, next_state, done, omega = 1e+5):
@@ -276,12 +285,12 @@ class PrioritizedMemory(Memory):
         return batch;
 
     def sample(self):
-        ''''''
+        '''Sample batch'''
         if self.is_training:
             #deposit a batch into the tree
             idxs, priorities = tuple(zip(*self.exps_latest));
-            self.sumtree.add_nodes(idxs, priorities, update_tree = True);
             self.exps_latest.clear();
+            self.sumtree.add_nodes(idxs, priorities, update_tree = True);
             #sample by priorities
             self.sample_idxs();
             batch = {};
@@ -293,7 +302,6 @@ class PrioritizedMemory(Memory):
             return self.valid_mmy.sample();
 
     def update_priorities(self, omegas):
-        ''''''
         priorities = self._cal_priority(omegas);
         for batch_idx, tree_idx, priority in zip(self.batch_idxs, self.tree_idxs, priorities):
             self.priorities[batch_idx] = priority;
