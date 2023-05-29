@@ -248,6 +248,7 @@ class PrioritizedMemory(Memory):
     def update(self, state, action, reward, next_state, done, omega = 1e+5):
         '''Add experience to the memory'''
         if self.is_training:
+            self.stock = min(self.stock + 1, self.max_size);
             #cal priority
             #Here we temporarily do not store the priority and idx in the tree
             #After the current round of data acquisition is completed (sampling means that the acquisition is completed), 
@@ -284,13 +285,19 @@ class PrioritizedMemory(Memory):
             batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device'));
         return batch;
 
+
+    def get_stock(self):
+        '''Returns the amount of experience currently stored'''
+        return self.stock;
+
     def sample(self):
         '''Sample batch'''
         if self.is_training:
-            #deposit a batch into the tree
-            idxs, priorities = tuple(zip(*self.exps_latest));
-            self.exps_latest.clear();
-            self.sumtree.add_nodes(idxs, priorities, update_tree = True);
+            if len(self.exps_latest) == 0:
+                #Add the experience that has not been added to the tree first.
+                idxs, priorities = tuple(zip(*self.exps_latest));
+                self.exps_latest.clear();
+                self.sumtree.add_nodes(idxs, priorities, update_tree = True);
             #sample by priorities
             self.sample_idxs();
             batch = {};
@@ -302,6 +309,15 @@ class PrioritizedMemory(Memory):
             return self.valid_mmy.sample();
 
     def update_priorities(self, omegas):
+        '''Update the priority of sampled data
+        
+        Parameters:
+        ----------
+        omegas:list
+            Requirement:
+            1.The length must be consistent with the batch size of the current sampling training.
+            2.The order must be consistent with the order in the batch of the current sampling training.
+        '''
         priorities = self._cal_priority(omegas);
         for batch_idx, tree_idx, priority in zip(self.batch_idxs, self.tree_idxs, priorities):
             self.priorities[batch_idx] = priority;

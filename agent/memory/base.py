@@ -24,6 +24,10 @@ class Memory():
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
+    def get_stock(self):
+        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
     def train(self):
         glb_var.get_value("logger").error('Method needs to be called after being implemented');
         raise NotImplementedError;
