@@ -293,7 +293,7 @@ class PrioritizedMemory(Memory):
     def sample(self):
         '''Sample batch'''
         if self.is_training:
-            if len(self.exps_latest) == 0:
+            if len(self.exps_latest) != 0:
                 #Add the experience that has not been added to the tree first.
                 idxs, priorities = tuple(zip(*self.exps_latest));
                 self.exps_latest.clear();

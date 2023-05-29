@@ -6,14 +6,14 @@
                 "name":"linear",
                 "var_start":5.0,
                 "var_end":0.05,
-                "star_epoch":1000,
+                "star_epoch":100,
                 "end_epoch":10000
             },
             "gamma": 0.99,
             "net_updte_cfg":{
                 "name":"polyak",
                 "beta":0.5,
-                "update_step":10
+                "update_step":50
             }
         },
         "net_cfg":{
@@ -23,7 +23,7 @@
         },
         "optimizer_cfg":{
             "name":"adam",
-            "lr":2e-3,
+            "lr":1e-2,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,

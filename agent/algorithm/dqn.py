@@ -92,9 +92,9 @@ class TargetDQN(DQN):
         '''
         super().init_net(net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
         self.q_target_net = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
-        self.net_updater.set_net(self.q_net, self.q_target_net);
         #Initialize q_target_net with q_net
         self.net_updater.net_param_copy(self.q_net, self.q_target_net);
+        self.net_updater.set_net(self.q_net, self.q_target_net);
         self.q_eval_net = self.q_target_net;
 
     def update(self):
