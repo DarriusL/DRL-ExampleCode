@@ -151,7 +151,7 @@ class VarReporter():
         content = head + '\n';
         cnt = 0;
         for key, value in self.var_dict.items():
-            content += f'{key}:[{value}]';
+            content += f'{key}:[{value}] ';
             cnt += 1;
             if cnt >= num_of_var_per_line:
                 cnt = 0;

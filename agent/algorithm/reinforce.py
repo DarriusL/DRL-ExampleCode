@@ -95,7 +95,7 @@ class Reinforce(Algorithm):
         #[T]
         log_probs = action_pd_batch.log_prob(batch['actions']);
         rets, _ = self.cal_rets(batch);
-        loss = - (rets * log_probs).mean();
+        loss = - self.policy_loss_var*(rets * log_probs).mean();
 
         if self.entorpy_reg_var_shedule is not None:
             #entropy regularization

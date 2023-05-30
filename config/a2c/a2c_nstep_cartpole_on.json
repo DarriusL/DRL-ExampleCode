@@ -2,24 +2,30 @@
     "agent_cfg":{
         "algorithm_cfg":{
             "name":"A2C",
-            "var_schedule_cfg":{
-                "name":"linear",
-                "var_start":5.0,
-                "var_end":0.05,
-                "star_epoch":1000,
-                "end_epoch":10000
+            "actor_cfg":{
+                "name":"reinforce",
+                "var_schedule_cfg":null,
+                "gamma":0.99,
+                "rets_mean_baseline":true,
+                "policy_loss_var":1,
+                "entropy_reg_var_cfg":{
+                    "name":"linear",
+                    "var_start":0.1,
+                    "var_end":0.005,
+                    "star_epoch":0,
+                    "end_epoch":1000
+                }
             },
-            "gamma": 0.99,
-            "net_updte_cfg":{
-                "name":"polyak",
-                "beta":0.5,
-                "update_step":50
+            "critic_cfg":{
+
             }
         },
         "net_cfg":{
-            "name":"MLPNet",
-            "hid_layers":[64],
-            "hid_layers_activation":"Selu"
+            "name":"SharedMLPNet",
+            "body_hid_layers":[32],
+            "body_out_dim":16,
+            "hid_layers_activation":"Selu",
+            "output_hid_layers":[16]
         },
         "optimizer_cfg":{
             "name":"adam",
@@ -32,7 +38,7 @@
         },
         "lr_schedule_cfg":null,
         "memory_cfg":{
-            "name":"PER",
+            "name":"OnPolicyBatch",
             "epsilon":1e-5,
             "eta":0.6,
             "max_size":16384,

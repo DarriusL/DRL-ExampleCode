@@ -73,6 +73,27 @@ def get_activation_fn(name = 'selu'):
                                         f'please replace or add the code yourself.\nSupport list:{activations}');
         raise callback.CustomException('ActivationCfgNameError');
 
+def get_mlpnet(hid_layers, activation_fn, in_dim, out_dim):
+    ''''''
+    if len(hid_layers) > 1:
+        layers = [
+            torch.nn.Linear(in_dim, hid_layers[0]),
+            torch.nn.Dropout(glb_var.get_value('dropout_rate')),
+            activation_fn] + [
+            torch.nn.Linear(hid_layers[i], hid_layers[i+1]) for i in range(len(hid_layers) - 1)] + [
+            activation_fn,
+            torch.nn.Linear(hid_layers[-1], out_dim)    
+        ];
+    else:
+        #len(.)==1
+        layers = [
+            torch.nn.Linear(in_dim, hid_layers[0]),
+            torch.nn.Dropout(glb_var.get_value('dropout_rate')),
+            activation_fn,
+            torch.nn.Linear(hid_layers[0], out_dim)
+        ]
+    return torch.nn.Sequential(*layers);
+
 class NetUpdater():
     '''for updating the network'''
     def __init__(self, net_update_cfg) -> None:

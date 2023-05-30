@@ -103,7 +103,8 @@ class OnPolicySystem(System):
             self.max_total_rewards = total_rewards;
             self.valid_not_imporve_cnt = 0;
         elif total_rewards == self.max_total_rewards:
-            self._save();
+            if max(self.rets_mean_valid) == rets_mean: 
+                self._save();
             self.valid_not_imporve_cnt += 1;
         else:
             self.valid_not_imporve_cnt += 1;

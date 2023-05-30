@@ -5,6 +5,7 @@
             "var_schedule_cfg":null,
             "gamma":0.99,
             "rets_mean_baseline":true,
+            "policy_loss_var":1,
             "entropy_reg_var_cfg":{
                 "name":"linear",
                 "var_start":0.1,
