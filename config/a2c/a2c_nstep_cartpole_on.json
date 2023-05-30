@@ -1,7 +1,7 @@
 {
     "agent_cfg":{
         "algorithm_cfg":{
-            "name":"DoubleDQN",
+            "name":"A2C",
             "var_schedule_cfg":{
                 "name":"linear",
                 "var_start":5.0,

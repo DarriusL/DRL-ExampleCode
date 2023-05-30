@@ -32,9 +32,10 @@ class DQN(Sarsa):
     def update(self):
         '''Update tau and lr for DQN'''
         self.var = self.var_schedule.step();
+        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
+        glb_var.get_value('var_reporter').add('Tau', self.var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
-        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
 
     def cal_loss(self, batch):
         '''Calculate MSELoss for DQN'''
@@ -86,6 +87,7 @@ class TargetDQN(DQN):
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         self.net_updater = net_util.NetUpdater(algorithm_cfg['net_updte_cfg']);
+        glb_var.get_value('var_reporter').add('Target network update factor', self.net_updater.beta);
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
@@ -101,9 +103,10 @@ class TargetDQN(DQN):
         '''Update tau and lr for DQN'''
         self.var = self.var_schedule.step();
         self.net_updater.update();
+        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
+        glb_var.get_value('var_reporter').add('Tau', self.var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
-        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
 
 class DoubleDQN(TargetDQN):
     '''Double DQN'''

@@ -3,7 +3,7 @@
 # @Email  : darrius.lei@outlook.com
 import torch
 import numpy as np
-from lib import util
+from lib import util, callback, glb_var
 
 class VarScheduler():
     '''variable scheduler'''
@@ -12,6 +12,14 @@ class VarScheduler():
         self.epoch = 0
         if self.name.lower() == 'linear':
             self.steper = self._linear_scheduler;
+        elif self.name.lower() == 'fixed':
+            if self.var_start != self.var_end:
+                glb_var.get_value('logger').error(f'[Fixed] means stay the same, but the start and end values are different in its configuration');
+                raise callback.CustomException('CfgError');
+            self.steper = self._fixed_value_scheduler;
+        else:
+            glb_var.get_value('logger').error(f'Unsupported type [{self.name}]');
+            raise callback.CustomException('CfgError');
     
     def step(self):
         return self.steper();
@@ -23,6 +31,10 @@ class VarScheduler():
             return self.var_start
         var = self.var_start - (self.var_start - self.var_end)/(self.end_epoch - self.star_epoch) * (self.epoch - self.star_epoch);
         return max(var, self.var_end);
+
+    def _fixed_value_scheduler(self):
+        '''fixed value scheduler'''
+        return self.var_start;
 
 def cal_returns(rewards, dones, gamma):
     '''Compute the returns in the trajectory produced by the Monte Carlo simulation

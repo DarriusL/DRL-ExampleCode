@@ -8,6 +8,7 @@ class Algorithm():
     '''Abstract Memory class to define the API methods'''
     def __init__(self, algorithm_cfg) -> None:
         util.set_attr(self, algorithm_cfg, except_type = dict);
+        glb_var.get_value('var_reporter').add('Gamma', self.gamma);
         self.action_strategy = None;
 
     def init_net(self):

@@ -2,7 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.algorithm import *
-from lib import util, callback
+from lib import util, callback, glb_var
 from room.system.base import System
 import numpy as np
 import torch
@@ -109,10 +109,11 @@ class OnPolicySystem(System):
             self.valid_not_imporve_cnt += 1;
         solved = total_rewards > self.env.solved_total_reward;
         self.best_solved = self.max_total_rewards > self.env.solved_total_reward;
-        self.logger.info(f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - '
-                         f'Epoch:[{epoch + 1}] - lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'
-                        f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]'
-                        f'- solved(now/best): [{solved}/{self.best_solved}] - not_imporve_cnt: [{self.valid_not_imporve_cnt}]');
+        content_head = f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - '\
+                         f'Epoch:[{epoch + 1}] - lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'\
+                        f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]'\
+                        f'- solved(now/best): [{solved}/{self.best_solved}] - not_imporve_cnt: [{self.valid_not_imporve_cnt}]';
+        glb_var.get_value('var_reporter').report(self.logger.info, content_head, 4);
         return (self.valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and self.best_solved) or \
             (self.max_total_rewards >= self.env.finish_total_reward);
 

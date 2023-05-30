@@ -21,7 +21,12 @@ class Reinforce(Algorithm):
         #label for onpolicy algorithm
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_default;
-
+        if algorithm_cfg['entropy_reg_var_cfg'] is not None:
+            self.entorpy_reg_var_shedule = alg_util.VarScheduler(algorithm_cfg['entropy_reg_var_cfg']);
+            self.entorpy_reg_var = self.entorpy_reg_var_shedule.var_start;
+        else:
+            self.entorpy_reg_var_shedule = None;
+    
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
@@ -91,10 +96,18 @@ class Reinforce(Algorithm):
         log_probs = action_pd_batch.log_prob(batch['actions']);
         rets, _ = self.cal_rets(batch);
         loss = - (rets * log_probs).mean();
+
+        if self.entorpy_reg_var_shedule is not None:
+            #entropy regularization
+            entropy_reg_loss = action_pd_batch.entropy().mean();
+            loss += - self.entorpy_reg_var*entropy_reg_loss;
         return loss;
 
     def update(self):
         '''Update lr for REINFORCE'''
+        if self.entorpy_reg_var_shedule is not None:
+            self.entorpy_reg_var = self.entorpy_reg_var_shedule.step();
+            glb_var.get_value('var_reporter').add('Entropy regularization coefficient', self.entorpy_reg_var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
 
@@ -114,7 +127,6 @@ class Reinforce(Algorithm):
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();
-        torch.nn.utils.clip_grad_norm_(self.pi.parameters(), max_norm = 0.5);
         self.optimizer.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();

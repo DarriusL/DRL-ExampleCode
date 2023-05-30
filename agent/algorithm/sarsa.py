@@ -36,10 +36,11 @@ class Sarsa(Algorithm):
     def update(self):
         '''Update epsilon and lr for SARSA'''
         self.var = self.var_schedule.step();
+        glb_var.get_value('var_reporter').add('Epsilon', self.var);
+        glb_var.get_value('logger').debug(f'{self.name} epsilon:[{self.var}]');
         if self.lr_schedule is not None:
             self.lr_schedule.step();
-        glb_var.get_value('logger').debug(f'{self.name} epsilon:[{self.var}]');
-
+        
     def cal_action_pd(self, state):
         '''
         Action distribution probability in the input state
