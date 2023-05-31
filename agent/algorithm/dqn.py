@@ -71,8 +71,6 @@ class DQN(Sarsa):
             Convert through batch_to_tensor before passing in
         '''
         loss = self.cal_loss(batch);
-        if hasattr(torch.cuda, 'empty_cache'):
-            torch.cuda.empty_cache();
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();

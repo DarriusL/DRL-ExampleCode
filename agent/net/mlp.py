@@ -28,6 +28,19 @@ class MLPNet(Net):
         return self.net(x);
 
 class SharedMLPNet(Net):
+    '''
+    Shared body MLPNet
+                                       ____________
+                                      |           |
+               _______________     --| OutPutNet1|--[output1]
+              |              |    | |___________|
+    [input]--|    BodyNet   |----|    ....
+            |______________|    |  ____________
+                               |  |           |
+                              |--| OutPutNetn|--[outputn]
+                                |___________|  
+
+    '''
     def __init__(self, net_cfg, in_dim, out_dim) -> None:
         super().__init__(net_cfg);
         self.num_outnets = len(out_dim);
@@ -45,7 +58,7 @@ class SharedMLPNet(Net):
     def forward(self, x, integrated = False):
         output = [];
         body_output = self.body_net(x);
-        for outnet in range(self.outnets):
+        for outnet in self.outnets:
             output.append(outnet(body_output));
         if integrated:
             return output;

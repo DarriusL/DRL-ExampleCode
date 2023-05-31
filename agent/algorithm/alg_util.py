@@ -36,7 +36,7 @@ class VarScheduler():
         '''fixed value scheduler'''
         return self.var_start;
 
-def cal_returns(rewards, dones, gamma):
+def cal_returns(rewards, dones, gamma, fast = False):
     '''Compute the returns in the trajectory produced by the Monte Carlo simulation
 
     Parameters:
@@ -49,11 +49,16 @@ def cal_returns(rewards, dones, gamma):
     gamma:float
     '''
     T = rewards.shape[0];
-    rets = torch.zeros_like(rewards);
-    future_ret = torch.tensor(.0, dtype=rewards.dtype)
-    for t in reversed(range(T)):
-        future_ret = rewards[t] + gamma * future_ret * (~ dones[t]);
-        rets[t] = future_ret;
+    if fast:
+        g = torch.pow(torch.ones_like(rewards).fill_(gamma), torch.arange(T, device = glb_var.get_value('device')));
+        ret_t = rewards * g;
+        rets = torch.cumsum(ret_t, dim = -1).flip(dims=[-1])
+    else:
+        rets = torch.zeros_like(rewards);
+        future_ret = torch.tensor(.0, dtype=rewards.dtype)
+        for t in reversed(range(T)):
+            future_ret = rewards[t] + gamma * future_ret * (~ dones[t]);
+            rets[t] = future_ret;
     return rets;
 
 def cal_nstep_returns(rewards, dones, next_v_pred, gamma, n):

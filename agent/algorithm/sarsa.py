@@ -100,8 +100,6 @@ class Sarsa(Algorithm):
         batch['next_actions'] = torch.zeros_like(batch['actions'])
         batch['next_actions'][:-1] = batch['actions'][1:]
         loss = self.cal_loss(batch);
-        if hasattr(torch.cuda, 'empty_cache'):
-            torch.cuda.empty_cache();
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();

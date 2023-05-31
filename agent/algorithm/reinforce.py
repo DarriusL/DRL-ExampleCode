@@ -122,8 +122,6 @@ class Reinforce(Algorithm):
         #[T, out_dim]
         action_batch_logits = self.cal_action_pd_batch(batch);
         loss = self.cal_loss(action_batch_logits, batch);
-        if hasattr(torch.cuda, 'empty_cache'):
-            torch.cuda.empty_cache();
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();

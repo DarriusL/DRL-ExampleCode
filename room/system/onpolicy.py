@@ -92,7 +92,7 @@ class OnPolicySystem(System):
             self._explore();
             batch = self.agent.memory.sample();
             total_rewards += self.env.get_total_reward();
-            rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma).mean().item();
+            rm = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma, fast = True).mean().item();
             rets_mean += rm;
         total_rewards /= self.cfg['valid']['valid_times'];
         rets_mean /= self.cfg['valid']['valid_times'];

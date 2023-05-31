@@ -5,7 +5,7 @@ import os, logging, argparse
 from lib import glb_var, callback
 from lib.callback import Logger
 from room.work import run_work
-
+#TODO:Added: A mode that can be trained on top of existing models
 if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):
         os.makedirs("./cache/logger");
