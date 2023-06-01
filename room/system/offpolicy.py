@@ -14,7 +14,6 @@ class OffPolicySystem(OnPolicySystem):
 
     def _init_sys(self):
         '''System additional initialization functions'''
-        self.loss = [];
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
         if  self.agent.memory.is_onpolicy:
@@ -68,15 +67,10 @@ class OffPolicySystem(OnPolicySystem):
             state = next_state;
 
     def _train_epoch(self, epoch):
-        '''Model training per epoch'''
-        #start to train
-        for _ in range(self.agent.train_times_per_epoch):
-            loss_epoch = [];
+      for _ in range(self.agent.train_times_per_epoch):
             batch = self.agent.memory.sample();
-            logger.debug(f'batch: {batch}');
             for _ in range(self.agent.batch_learn_times_per_train):
-                loss_epoch.append(self.agent.algorithm.train_step(batch));
-        self.loss.append(np.mean(loss_epoch));
+                self.agent.algorithm.train_step(batch);
 
     def train(self):
         return super().train();

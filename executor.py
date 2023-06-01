@@ -4,7 +4,7 @@
 import os, logging, argparse
 from lib import glb_var, callback
 from lib.callback import Logger
-from room.work import run_work
+
 #TODO:Added: A mode that can be trained on top of existing models
 #TODO:logger optimization in each file
 if __name__ == '__main__':
@@ -28,6 +28,7 @@ if __name__ == '__main__':
     logger = log.get_log();
     glb_var.set_value('log', logger);
     glb_var.set_value('dev', args.dev);
+    from room.work import run_work
     if args.config is not None and args.mode in ['train', 'test']:
         run_work(args.config, args.mode);
     else:

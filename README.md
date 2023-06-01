@@ -23,27 +23,39 @@ conda activate dev
 ├── .gitignore
 ├── agent
 │	├── algorithm
+│	│	├── actor_critic.py
 │	│	├── alg_util.py
 │	│	├── base.py
+│	│	├── dqn.py
 │	│	├── reinforce.py
 │	│	├── sarsa.py
-│	│	└──__init__.py
+│	│	└── __init__.py
 │	├── memory
 │	│	├── base.py
+│	│	├── offpolicy.py
 │	│	├── onpolicy.py
 │	│	└── __init__.py
 │	└── net
 │		├── base.py
 │		├── mlp.py
 │		├── net_util.py
-│		└──__init__.py
-├── cache/.
+│		└── __init__.py
 ├── config
+│	├── a2c
+│	│	└── a2c_nstep_cartpole_on.json
+│	├── dqn
+│	│	├── doubledqn_cartpole_off.json
+│	│	├── doubledqn_cartpole_per.json
+│	│	├── dqn_cartpole_off.json
+│	│	└── targetdqn_cartpole_off.json
 │	├── lab_cfg.json
 │	├── reinforce
-│	│	└── reinforce_cartpole.json
+│	│	├── reinforce_cartpole_mc.json
+│	│	├── reinforce_entropyreg_cartpole_mc.json
+│	│	└── reinforce_entropyreg_cartpole_nstep.json
 │	└── sarsa
-│		└── sarsa_cartpole.json
+│		├── sarsa_cartpole_mc.json
+│		└── sarsa_cartpole_nstep.json
 ├── env
 │	├── base.py
 │	├── openai_gym.py
@@ -58,7 +70,11 @@ conda activate dev
 ├── LICENSE
 ├── README.md
 └── room
-	├── system.py
+	├── system
+	│	├── base.py
+	│	├── offpolicy.py
+	│	├── onpolicy.py
+	│	└── __init__.py
 	└── work.py
 
 ```

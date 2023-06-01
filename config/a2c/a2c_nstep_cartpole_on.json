@@ -6,15 +6,16 @@
             "gamma":0.99,
             "rets_mean_baseline":false,
             "policy_loss_var":1,
-            "value_loss_var":1,
+            "value_loss_var":0.9,
             "entropy_reg_var_cfg":{
-                "name":"linear",
-                "var_start":0.1,
-                "var_end":0.005,
+                "name":"fixed",
+                "var_start":0.01,
+                "var_end":0.01,
                 "star_epoch":0,
-                "end_epoch":1000
+                "end_epoch":0
             },
-            "n_step_returns":11
+            "n_step_returns":11,
+            "lbd":null
         },
         "net_cfg":{
             "name":"SharedMLPNet",
@@ -25,7 +26,7 @@
         },
         "optimizer_cfg":{
             "name":"adam",
-            "lr":2e-3,
+            "lr":1e-4,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
@@ -34,18 +35,11 @@
         },
         "lr_schedule_cfg":null,
         "memory_cfg":{
-            "name":"OnPolicyBatch",
-            "epsilon":1e-5,
-            "eta":0.6,
-            "max_size":16384,
-            "batch_size":128,
-            "sample_add_latest":false
+            "name":"OnPolicyBatch"
         },
-        "max_epoch":20000,
-        "train_start_epoch":2,
-        "expolre_max_step":64,
-        "train_times_per_epoch":16,
-        "batch_learn_times_per_train":1
+        "max_epoch":10000,
+        "train_exp_size":128,
+        "batch_learn_times_per_train":4
     },
     "env":{
         "name":"CartPole",
@@ -55,7 +49,7 @@
     },
     "model_path":null,
     "valid":{
-        "valid_step":10,
+        "valid_step":100,
         "valid_times":5,
         "not_improve_finish_step":5
     }

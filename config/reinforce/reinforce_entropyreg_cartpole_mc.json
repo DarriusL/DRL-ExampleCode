@@ -8,11 +8,12 @@
             "policy_loss_var":1,
             "entropy_reg_var_cfg":{
                 "name":"linear",
-                "var_start":0.1,
+                "var_start":0.01,
                 "var_end":0.005,
                 "star_epoch":0,
                 "end_epoch":5000
-            }
+            },
+            "batch_learn_times_per_train":4
         },
         "net_cfg":{
             "name":"MLPNet",

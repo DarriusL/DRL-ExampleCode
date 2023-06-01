@@ -9,7 +9,8 @@
                 "star_epoch":0,
                 "end_epoch":80000
             },
-            "gamma": 0.99
+            "gamma": 0.99,
+            "batch_learn_times_per_train":4
         },
         "net_cfg":{
             "name":"MLPNet",

@@ -77,8 +77,8 @@ class OnPolicySystem(System):
         '''Model training per epoch
         '''
         batch = self.agent.memory.sample();
-        logger.debug(f'batch data:\n{batch}');
-        self.agent.algorithm.train_step(batch);
+        for _ in range(self.agent.batch_learn_times_per_train):
+            self.agent.algorithm.train_step(batch);
 
     def _valid_epoch(self, epoch):
         '''Model validation per epoch'''

@@ -12,7 +12,8 @@
                 "var_end":0.005,
                 "star_epoch":0,
                 "end_epoch":50000
-            }
+            },
+            "batch_learn_times_per_train":4
         },
         "net_cfg":{
             "name":"MLPNet",

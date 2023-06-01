@@ -4,24 +4,35 @@
 from agent.algorithm.reinforce import Reinforce
 from agent.algorithm import alg_util
 from agent.net import get_net, net_util
-from lib import glb_var
+from lib import glb_var, callback
 import torch
 
 logger = glb_var.get_value('log')
 
-class SharedNetActorCritic(Reinforce):
-    '''The critic network and the actor network share parts of the network'''
+class ActorCritic(Reinforce):
+    '''Actor Critic Algorithm'''
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #label for onpolicy algorithm
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_default;
-        glb_var.get_value('var_reporter').add('Policy loss coefficient', self.policy_loss_var);
-        if algorithm_cfg['entropy_reg_var_cfg'] is not None:
-            self.entorpy_reg_var_shedule = alg_util.VarScheduler(algorithm_cfg['entropy_reg_var_cfg']);
-            self.entorpy_reg_var = self.entorpy_reg_var_shedule.var_start;
+        glb_var.get_value('var_reporter').add('Value loss coefficient', self.value_loss_var);
+        #cal advs method
+        if self.n_step_returns is not None and self.lbd is not None:
+            self._cal_advs_and_v_tgts = self._cal_mc_advs_and_v_tgts;
+        elif self.n_step_returns is not None and self.lbd is None:
+            #use n-step
+            self._cal_advs_and_v_tgts = self._cal_nstep_advs_and_v_tgts;
+            glb_var.get_value('var_reporter').add('Num_step_rets', self.n_step_returns);
+        elif self.n_step_returns is None and self.lbd is not None:
+            #use gae
+            self._cal_advs_and_v_tgts = self._cal_gae_advs_and_v_tgts;
+            glb_var.get_value('var_reporter').add('GAE lambda', self.lbd);
         else:
-            self.entorpy_reg_var_shedule = None;
+            #simultaneously exist
+            logger.error('There are two calculation methods for selecting advantages for algorithms in the configuration file');
+            raise callback.CustomException('CfgError');
+    
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
@@ -29,7 +40,7 @@ class SharedNetActorCritic(Reinforce):
         #output1 is from actor, output2 is from critic
         out_dim = [out_dim, 1];
         self.acnet = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
-        self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
+        self.optimizer = net_util.get_optimizer(optim_cfg, self.acnet);
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
 
@@ -93,10 +104,29 @@ class SharedNetActorCritic(Reinforce):
         v_tgts = advs + v_preds[:-1]
         return advs, v_tgts
     
-    def _cal_policy_loss(self, batch, rets):
-        return super()._cal_loss(batch, rets);
+    def _cal_policy_loss(self, batch, advs):
+        return super()._cal_loss(batch, advs);
 
     def _cal_value_loss(self, v_preds, v_tgts):
-        return torch.nn.MSELoss()(v_preds.float(), v_tgts.float());
+        loss = self.value_loss_var*torch.nn.MSELoss()(v_preds.float(), v_tgts.float());
+        logger.debug(f'Critic loss: [{loss.item()}]')
+        return loss;
+
+    def train_step(self, batch):
+        ''''''
+        v_preds = self._cal_v(batch['states']);
+        advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
+        policy_loss = self._cal_policy_loss(batch, advs);
+        value_loss = self._cal_value_loss(v_preds, v_tgts);
+        loss = policy_loss + value_loss;
+        self.optimizer.zero_grad();
+        self._check_nan(loss);
+        loss.backward();
+        #TODO: shared and not shared, different
+        torch.nn.utils.clip_grad_norm_(self.acnet.parameters(), max_norm = 0.5);
+        self.optimizer.step();
+        if hasattr(torch.cuda, 'empty_cache'):
+            torch.cuda.empty_cache();
+        
         
 
