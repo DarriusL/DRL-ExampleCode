@@ -55,12 +55,12 @@ class SharedMLPNet(Net):
         #set training mode
         self.train();
 
-    def forward(self, x, integrated = False):
+    def forward(self, x, is_integrated = False):
         output = [];
         body_output = self.body_net(x);
         for outnet in self.outnets:
             output.append(outnet(body_output));
-        if integrated:
+        if is_integrated:
             return output;
         else:
             return tuple(output);

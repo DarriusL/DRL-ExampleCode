@@ -6,6 +6,7 @@ from lib import glb_var, callback
 from lib.callback import Logger
 from room.work import run_work
 #TODO:Added: A mode that can be trained on top of existing models
+#TODO:logger optimization in each file
 if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):
         os.makedirs("./cache/logger");
@@ -23,11 +24,12 @@ if __name__ == '__main__':
     log = Logger(
         level = log_level,
         filename = './cache/logger/logger.log',
-    ).get_log()
-    glb_var.set_value('logger', log);
+    )
+    logger = log.get_log();
+    glb_var.set_value('log', logger);
     glb_var.set_value('dev', args.dev);
     if args.config is not None and args.mode in ['train', 'test']:
         run_work(args.config, args.mode);
     else:
-        glb_var.get_value('logger').error(f'Mode [{args.mode}] is not supported.')
+        logger.error(f'Mode [{args.mode}] is not supported.')
         raise callback.CustomException('ModeError');

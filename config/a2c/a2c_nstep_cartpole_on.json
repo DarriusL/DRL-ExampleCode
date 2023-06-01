@@ -2,23 +2,19 @@
     "agent_cfg":{
         "algorithm_cfg":{
             "name":"A2C",
-            "actor_cfg":{
-                "name":"reinforce",
-                "var_schedule_cfg":null,
-                "gamma":0.99,
-                "rets_mean_baseline":true,
-                "policy_loss_var":1,
-                "entropy_reg_var_cfg":{
-                    "name":"linear",
-                    "var_start":0.1,
-                    "var_end":0.005,
-                    "star_epoch":0,
-                    "end_epoch":1000
-                }
+            "var_schedule_cfg":null,
+            "gamma":0.99,
+            "rets_mean_baseline":false,
+            "policy_loss_var":1,
+            "value_loss_var":1,
+            "entropy_reg_var_cfg":{
+                "name":"linear",
+                "var_start":0.1,
+                "var_end":0.005,
+                "star_epoch":0,
+                "end_epoch":1000
             },
-            "critic_cfg":{
-
-            }
+            "n_step_returns":11
         },
         "net_cfg":{
             "name":"SharedMLPNet",

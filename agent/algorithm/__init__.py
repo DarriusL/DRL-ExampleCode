@@ -6,6 +6,8 @@ from lib import callback, glb_var
 
 __all__ = ['get_alg', 'alg_util'];
 
+logger = glb_var.get_value('log');
+
 def get_alg(alg_cfg):
     '''Obtain the corresponding algorithm object according to the configuration'''
     try:
@@ -23,5 +25,5 @@ def get_alg(alg_cfg):
         elif alg_cfg['name'].lower() == 'doubledqn':
             return DoubleDQN(alg_cfg);
         else:
-            glb_var.get_value('logger').error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
+            logger.error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');

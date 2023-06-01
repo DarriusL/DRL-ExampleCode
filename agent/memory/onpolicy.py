@@ -6,6 +6,8 @@ from lib import glb_var
 import numpy as np
 import torch
 
+logger = glb_var.get_value('log');
+
 class OnPolicyMemory(Memory):
     '''Memory for on policy algorithm in episodic env, experience is stored according to epoch
 

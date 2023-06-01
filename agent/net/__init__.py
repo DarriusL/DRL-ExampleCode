@@ -7,6 +7,7 @@ from agent.net import net_util
 from lib import callback
 
 __all__ = ['get_net', 'net_util']
+logger = glb_var.get_value('log');
 
 def get_net(net_cfg, in_dim, out_dim):
     '''
@@ -26,6 +27,8 @@ def get_net(net_cfg, in_dim, out_dim):
     except:
         if net_cfg['name'].lower() == 'mlpnet':
             return MLPNet(net_cfg, in_dim, out_dim);
+        elif net_cfg['name'].lower() == 'sharedmlpnet':
+            return SharedMLPNet(net_cfg, in_dim, out_dim);
         else:
-            glb_var.get_value('logger').error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
+            logger.error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');

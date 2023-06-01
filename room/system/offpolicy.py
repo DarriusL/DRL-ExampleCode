@@ -2,8 +2,10 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from room.system.onpolicy import OnPolicySystem
-from lib import callback
+from lib import callback, glb_var
 import numpy as np
+
+logger = glb_var.get_value('log');
 
 class OffPolicySystem(OnPolicySystem):
     '''System for offpolicy agent'''
@@ -16,13 +18,13 @@ class OffPolicySystem(OnPolicySystem):
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
         if  self.agent.memory.is_onpolicy:
-            self.logger.error(f'Algorithm [{self.agent.algorithm.name}] is off-policy, while memory [{self.agent.memory}] is on-policy');
+            logger.error(f'Algorithm [{self.agent.algorithm.name}] is off-policy, while memory [{self.agent.memory}] is on-policy');
             raise callback.CustomException('PolicyConflict');
     
     def _check_train_point(self, epoch):
         '''Check if the conditions for a training session are met'''
         if epoch >= self.agent.train_start_epoch and self.agent.memory.get_stock() >= self.agent.memory.batch_size:
-            self.logger.debug(f'[Epoch: {epoch}] The number of experiences currently stored: [{self.agent.memory.get_stock()}]');
+            logger.debug(f'[Epoch: {epoch}] The number of experiences currently stored: [{self.agent.memory.get_stock()}]');
             return True;
         else:
             return False
@@ -71,13 +73,10 @@ class OffPolicySystem(OnPolicySystem):
         for _ in range(self.agent.train_times_per_epoch):
             loss_epoch = [];
             batch = self.agent.memory.sample();
-            self.logger.debug(f'batch: {batch}');
+            logger.debug(f'batch: {batch}');
             for _ in range(self.agent.batch_learn_times_per_train):
                 loss_epoch.append(self.agent.algorithm.train_step(batch));
         self.loss.append(np.mean(loss_epoch));
-        self.logger.debug(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
-                    f'Epoch: [{epoch + 1}/{self.agent.max_epoch}] - train loss: [{self.loss[-1]:.8f}] - '
-                    f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n');
 
     def train(self):
         return super().train();

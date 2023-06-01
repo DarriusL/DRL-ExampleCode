@@ -9,6 +9,8 @@ import numpy as np
 from operator import itemgetter
 import torch, copy, random
 
+logger = glb_var.get_value('log');
+
 class OffPolicyMemory(Memory):
     '''Memory for off policy algorithm, experience is stored according to batch'''
     def __init__(self, memory_cfg) -> None:
@@ -92,14 +94,14 @@ class SumTree():
         if capacity & (capacity - 1) == 0:
             self.capacity = capacity;
             return;
-        glb_var.get_value('logger').warn('The tree capacity needs to be an integer power of 2, '
+        logger.warn('The tree capacity needs to be an integer power of 2, '
                                          'it will be automatically adjusted or canceled to reset');
         #Calculates the nearest power of 2 to the capacity
         power_bin_capacity = len(bin(capacity)) - 2;
         power_bin = np.array([power_bin_capacity - 1, power_bin_capacity, power_bin_capacity + 1]);
         capacity_near = 2 ** power_bin;
         self.capacity = capacity_near[np.argmin(np.abs(capacity_near - capacity))];
-        glb_var.get_value('logger').info(f'The tree capacity will be reset to {self.capacity}');
+        logger.info(f'The tree capacity will be reset to {self.capacity}');
     
     def get_latest_idx(self):
         '''Get the tree index of the last added data'''

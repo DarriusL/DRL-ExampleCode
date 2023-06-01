@@ -5,6 +5,8 @@ from lib import json_util, util, glb_var, callback
 from room.system import *
 import torch, time, os
 
+logger = glb_var.get_value('log');
+
 def run_work(cfg_path, mode):
     '''Run the corresponding mode according to the configuration file
 
@@ -44,6 +46,6 @@ def run_work(cfg_path, mode):
 
 def run_train(system):
     t = time.time();
-    glb_var.get_value('logger').info('Start training ... ');
+    logger.info('Start training ... ');
     system.train();
-    glb_var.get_value('logger').info(f'Training complete, time consuming: {util.s2hms(time.time() - t)}');
+    logger.info(f'Training complete, time consuming: {util.s2hms(time.time() - t)}');

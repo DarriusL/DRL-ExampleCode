@@ -7,12 +7,12 @@ from room.system.base import System
 import numpy as np
 import torch
 
+logger = glb_var.get_value('log');
 
 class OnPolicySystem(System):
     '''System for onpolicy agent'''
     def __init__(self, cfg, algorithm, env) -> None:
         super().__init__(cfg, algorithm, env);
-        self.loss = [];
         self.rets_mean_valid = [];
         self.total_rewards_valid = [];
         self.max_total_rewards = -np.inf;
@@ -23,13 +23,13 @@ class OnPolicySystem(System):
     def _init_sys(self):
         '''System additional initialization functions'''
         if  not self.agent.memory.is_onpolicy:
-            self.logger.error(f'Algorithm [{self.agent.algorithm.name}] is on-policy, while memory [{self.agent.memory}] is off-policy');
+            logger.error(f'Algorithm [{self.agent.algorithm.name}] is on-policy, while memory [{self.agent.memory}] is off-policy');
             raise callback.CustomException('PolicyConflict');
 
     def _check_train_point(self, epoch):
         '''Check if the conditions for a training session are met'''
         if len(self.agent.memory.states) == self.agent.train_exp_size:
-            self.logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
+            logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
                 f'Training requirements [{self.agent.train_exp_size}].');
             return True;
         else:
@@ -77,11 +77,8 @@ class OnPolicySystem(System):
         '''Model training per epoch
         '''
         batch = self.agent.memory.sample();
-        self.logger.debug(f'batch data:\n{batch}');
-        self.loss.append(self.agent.algorithm.train_step(batch));
-        self.logger.debug(f'[train - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'
-                    f'Epoch: [{epoch + 1}/{self.agent.max_epoch}] - train loss: [{self.loss[-1]:.8f}] - '
-                    f'lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n');
+        logger.debug(f'batch data:\n{batch}');
+        self.agent.algorithm.train_step(batch);
 
     def _valid_epoch(self, epoch):
         '''Model validation per epoch'''
@@ -114,7 +111,7 @@ class OnPolicySystem(System):
                          f'Epoch:[{epoch + 1}] - lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'\
                         f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]'\
                         f'- solved(now/best): [{solved}/{self.best_solved}] - not_imporve_cnt: [{self.valid_not_imporve_cnt}]';
-        glb_var.get_value('var_reporter').report(self.logger.info, content_head, 4);
+        glb_var.get_value('var_reporter').report(logger.info, content_head, 4);
         return (self.valid_not_imporve_cnt >= self.cfg['valid']['not_improve_finish_step'] and self.best_solved) or \
             (self.max_total_rewards >= self.env.finish_total_reward);
 
@@ -131,9 +128,8 @@ class OnPolicySystem(System):
             #train mode
             self.train_mode();
             self._explore();
-            if self._check_train_point(epoch):
-                #start to train
-                self._train_epoch(epoch);
+            #start to train
+            self._train_epoch(epoch);
             #algorithm update
             self.agent.algorithm.update();
             #valid mode
@@ -141,7 +137,7 @@ class OnPolicySystem(System):
                 if self._valid_epoch(epoch):
                     break;
             self._check_mode();
-        self.logger.info(f'Saved Model Information:\nSolved: [{self.best_solved}] - Mean total rewards: [{self.max_total_rewards}]'
+        logger.info(f'Saved Model Information:\nSolved: [{self.best_solved}] - Mean total rewards: [{self.max_total_rewards}]'
                          f'\nSaved path:{self.save_path}');
         #plot rets
         util.single_plot(
@@ -153,10 +149,7 @@ class OnPolicySystem(System):
             np.arange(self.cfg['valid']['valid_step'] - 1, epoch + 1, self.cfg['valid']['valid_step']) + 1,
             self.total_rewards_valid,
             'epoch', 'rewards', self.save_path + '/rewards.png');
-        #plot loss
-        util.single_plot(
-            np.arange(len(self.loss)), self.loss, 'epoch', 'loss', self.save_path + '/loss.png'
-        )
+
 
     def test(self):
         '''Test the model'''

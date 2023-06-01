@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from agent.memory import *
 import os
 
+logger = glb_var.get_value('log');
+
 @dataclass
 class Agent:
     memory:None
@@ -14,7 +16,6 @@ class Agent:
 class System():
     '''Abstract Memory class to define the API methods'''
     def __init__(self, cfg, algorithm, env) -> None:
-        self.logger = glb_var.get_value('logger');
         self.cfg = cfg;
         self.env = env;
         self.is_training = True;
@@ -43,20 +44,20 @@ class System():
             input("\n>>>press any key to continue<<<");
 
     def _check_train_point(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def _check_valid_point(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def _explore(self):
         '''The agent explores the environment to gain experience'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def _train_epoch(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def train_mode(self):
@@ -73,10 +74,10 @@ class System():
 
     def train(self):
         '''train agent'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def test(self):
         '''train agent'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;

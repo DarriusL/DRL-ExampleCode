@@ -41,7 +41,7 @@ class Sarsa(Algorithm):
         if self.lr_schedule is not None:
             self.lr_schedule.step();
         
-    def cal_action_pd(self, state):
+    def _cal_action_pd(self, state):
         '''
         Action distribution probability in the input state
 
@@ -75,7 +75,7 @@ class Sarsa(Algorithm):
             action = alg_util.action_default(action_logit);
         return action.cpu().item();
 
-    def cal_loss(self, batch):
+    def _cal_loss(self, batch):
         '''Calculate MSELoss for SARSA'''
         #[T, out_dim]
         q_preds_table = self.q_net(batch['states']);
@@ -99,7 +99,7 @@ class Sarsa(Algorithm):
         '''
         batch['next_actions'] = torch.zeros_like(batch['actions'])
         batch['next_actions'][:-1] = batch['actions'][1:]
-        loss = self.cal_loss(batch);
+        loss = self._cal_loss(batch);
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();
@@ -107,4 +107,4 @@ class Sarsa(Algorithm):
         self.optimizer.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
-        return loss.item();
+        glb_var.get_value('logger').debug(f'SARSA loss: [{loss.item()}]')

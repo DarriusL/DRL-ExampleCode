@@ -95,6 +95,7 @@ reinforce
 ```shell
 python executor.py -cfg='./config/reinforce/reinforce_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_mc.json' --mode='train'
+python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_nstep.json' --mode='train'
 python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
 ```
 

@@ -5,6 +5,8 @@ from agent.memory.onpolicy import *
 from agent.memory.offpolicy import *
 from lib import glb_var, callback
 
+logger = glb_var.get_value('log');
+
 def get_memory(mmy_cfg):
     '''Obtain the corresponding memory according to the configuration
     '''
@@ -17,5 +19,5 @@ def get_memory(mmy_cfg):
     elif mmy_cfg['name'].lower() in ['per', 'prioritizedmemory']:
         return PrioritizedMemory(mmy_cfg);
     else:
-        glb_var.get_value('logger').error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
+        logger.error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');

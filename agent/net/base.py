@@ -4,6 +4,8 @@
 import torch
 from lib import glb_var, util
 
+logger = glb_var.get_value('log');
+
 class Net(torch.nn.Module):
     '''Abstract Net class to define the API methods
     '''
@@ -13,10 +15,10 @@ class Net(torch.nn.Module):
 
     def _init_para(self, module):
         '''Network parameter initialization'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
     
     def forward(self):
         '''network forward pass'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;

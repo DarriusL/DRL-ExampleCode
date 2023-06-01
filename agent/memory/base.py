@@ -2,6 +2,9 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from lib import util, glb_var
+
+logger = glb_var.get_value('log');
+
 class Memory():
     '''Abstract Memory class to define the API methods
     
@@ -21,31 +24,31 @@ class Memory():
 
     def _batch_to_tensor(self):
         '''Convert a batch to a format for torch training'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def get_stock(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def train(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def valid(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def reset(self):
         '''Reset experience memory memory'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def update(self, state, action, reward, next_state, done):
         '''Add experience to memory'''
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;
 
     def sample(self):
-        glb_var.get_value("logger").error('Method needs to be called after being implemented');
+        logger.error('Method needs to be called after being implemented');
         raise NotImplementedError;

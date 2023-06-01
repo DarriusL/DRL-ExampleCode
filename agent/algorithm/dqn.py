@@ -8,6 +8,8 @@ from agent.memory.offpolicy import PrioritizedMemory
 from lib import glb_var
 import torch
 
+logger = glb_var.get_value('log')
+
 class DQN(Sarsa):
     '''The most original Deep Q-Network algorithm
     
@@ -32,12 +34,12 @@ class DQN(Sarsa):
     def update(self):
         '''Update tau and lr for DQN'''
         self.var = self.var_schedule.step();
-        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
+        logger.debug(f'{self.name} tau:[{self.var}]');
         glb_var.get_value('var_reporter').add('Tau', self.var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
 
-    def cal_loss(self, batch):
+    def _cal_loss(self, batch):
         '''Calculate MSELoss for DQN'''
         #[batch_size, out_dim]
         q_preds_table = self.q_net(batch['states']);
@@ -78,7 +80,7 @@ class DQN(Sarsa):
         self.optimizer.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
-        return loss.item();
+        logger.debug(f'{self.name} loss: [{loss.item()}]')
 
 class TargetDQN(DQN):
     '''DQN with target network'''
@@ -101,7 +103,7 @@ class TargetDQN(DQN):
         '''Update tau and lr for DQN'''
         self.var = self.var_schedule.step();
         self.net_updater.update();
-        glb_var.get_value('logger').debug(f'{self.name} tau:[{self.var}]');
+        logger.debug(f'{self.name} tau:[{self.var}]');
         glb_var.get_value('var_reporter').add('Tau', self.var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();

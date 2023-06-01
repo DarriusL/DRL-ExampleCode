@@ -5,6 +5,8 @@ import torch
 import numpy as np
 from lib import util, callback, glb_var
 
+logger = glb_var.get_value('log')
+
 class VarScheduler():
     '''variable scheduler'''
     def __init__(self, var_scheduler_cfg) -> None:
@@ -14,11 +16,11 @@ class VarScheduler():
             self.steper = self._linear_scheduler;
         elif self.name.lower() == 'fixed':
             if self.var_start != self.var_end:
-                glb_var.get_value('logger').error(f'[Fixed] means stay the same, but the start and end values are different in its configuration');
+                logger.error(f'[Fixed] means stay the same, but the start and end values are different in its configuration');
                 raise callback.CustomException('CfgError');
             self.steper = self._fixed_value_scheduler;
         else:
-            glb_var.get_value('logger').error(f'Unsupported type [{self.name}]');
+            logger.error(f'Unsupported type [{self.name}]');
             raise callback.CustomException('CfgError');
     
     def step(self):
@@ -45,8 +47,17 @@ def cal_returns(rewards, dones, gamma, fast = False):
         [T]
 
     dones:torch.Tensor
+        [T], bool
 
     gamma:float
+
+    fast:bool, optional
+        If enabled, use more efficient fast calculations.
+         default:False
+    
+    Notes:
+    ------
+    about [fast]:Problems with [fast] if experience comes from different tracks.
     '''
     T = rewards.shape[0];
     if fast:
@@ -62,14 +73,61 @@ def cal_returns(rewards, dones, gamma, fast = False):
     return rets;
 
 def cal_nstep_returns(rewards, dones, next_v_pred, gamma, n):
-    '''
+    '''Compute the returns in n steps
 
+    Parameters:
+    -----------
+    rewards:torch.Tensor
+    [T]
+    
+    dones:torch.Tensor
+    [T], bool
+    
+    gamma:float
+
+    next_v_pred:torch.Tensor
+    [T]
     '''
     rets = torch.zeros_like(rewards)
     future_ret = next_v_pred
     for t in reversed(range(n)):
         rets[t] = future_ret = rewards[t] + gamma * future_ret * (~ dones[t])
     return rets
+
+def cal_gaes(rewards, dones, v_preds, gamma, lbd):
+    '''Calculate the GAE
+
+    Parameters:
+    -----------
+    rewards:torch.Tensor
+    [T]
+
+    dones:torch.Tensor
+    [T], bool
+    
+    v_preds:torch.Tensor
+    [T+1]
+
+    gamma:float
+
+    lbd:float
+    '''
+    T = len(rewards);
+    #[T]
+    gaes = torch.zeros_like(rewards);
+    #[T]
+    not_dones = ~dones;
+    #notes:why v_preds[1:] times not_dones, but v_preds[:-1] not?
+    #adv = Q - V, (rewards + gamma*v_preds[1:]) can be understood as the estimation of Q.
+    #Therefore, if the next step corresponding to reward ends, its reward is estimated to be zero.
+    #And v_preds[:-1] means including rewards and next step estimates.
+    #In this way, even if the next step is terminated, the estimate of the next step contained in the estimate of V is not 0, 
+    # which is more conducive to the model learning to estimate 0
+    delta_ts = rewards + gamma*v_preds[1:]*not_dones - v_preds[:-1];
+    future_gae = torch.tensor(.0, dtype=rewards.dtype);
+    for t in reversed(range(T)):
+        gaes[t] = delta_ts[t] + gamma*lbd*future_gae*not_dones[t];
+    return gaes;
 
 def rets_mean_baseline(rets):
     '''Add baselines to returns

@@ -7,6 +7,8 @@ from agent.algorithm import alg_util
 from lib import glb_var
 import torch
 
+logger = glb_var.get_value('log')
+
 class Reinforce(Algorithm):
     '''Implementation of REINFORCE
     
@@ -21,6 +23,7 @@ class Reinforce(Algorithm):
         #label for onpolicy algorithm
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_default;
+        glb_var.get_value('var_reporter').add('Policy loss coefficient', self.policy_loss_var);
         if algorithm_cfg['entropy_reg_var_cfg'] is not None:
             self.entorpy_reg_var_shedule = alg_util.VarScheduler(algorithm_cfg['entropy_reg_var_cfg']);
             self.entorpy_reg_var = self.entorpy_reg_var_shedule.var_start;
@@ -35,7 +38,7 @@ class Reinforce(Algorithm):
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
 
-    def cal_action_pd(self, state):
+    def _cal_action_pd(self, state):
         '''
         Action distribution probability in the input state
 
@@ -47,7 +50,7 @@ class Reinforce(Algorithm):
         #return [..., out_dim]
         return self.pi(state);
 
-    def cal_action_pd_batch(self, batch):
+    def _cal_action_pd_batch(self, batch):
         '''Calculate the logarithm value of the action probability of a batch
 
         Parameters:
@@ -56,7 +59,7 @@ class Reinforce(Algorithm):
             The value in it has been converted to tensor
         '''
         states_batch = batch['states'];
-        return self.cal_action_pd(states_batch);
+        return self._cal_action_pd(states_batch);
 
     @torch.no_grad()
     def act(self, state, is_training):
@@ -73,14 +76,14 @@ class Reinforce(Algorithm):
         action
         '''
         #the logarithm of the action probability distribution
-        action_logit = self.pi(torch.from_numpy(state).to(torch.float32).to(glb_var.get_value('device')));
+        action_logit = self._cal_action_pd(torch.from_numpy(state).to(torch.float32).to(glb_var.get_value('device')));
         if is_training:
             action = self.action_strategy(action_logit);
         else:
             action = alg_util.action_default(action_logit);
         return action.cpu().item();
 
-    def cal_rets(self, batch):
+    def _cal_rets(self, batch):
         '''Calculate returns'''
         rets = alg_util.cal_returns(batch['rewards'], batch['dones'], self.gamma);
         rets_mean = rets.mean();
@@ -88,13 +91,14 @@ class Reinforce(Algorithm):
             rets = alg_util.rets_mean_baseline(rets);
         return rets, rets_mean.item();
 
-    def cal_loss(self, action_batch_logits, batch):
+    def _cal_loss(self, batch, rets):
         '''Calculate policy gradient loss for REINFORCE
         '''
+        #[T, out_dim]
+        action_batch_logits = self._cal_action_pd_batch(batch);
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[T]
         log_probs = action_pd_batch.log_prob(batch['actions']);
-        rets, _ = self.cal_rets(batch);
         loss = - self.policy_loss_var*(rets * log_probs).mean();
 
         if self.entorpy_reg_var_shedule is not None:
@@ -119,13 +123,12 @@ class Reinforce(Algorithm):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
-        #[T, out_dim]
-        action_batch_logits = self.cal_action_pd_batch(batch);
-        loss = self.cal_loss(action_batch_logits, batch);
+        rets, _ = self._cal_rets(batch);
+        loss = self._cal_loss(batch, rets);
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();
         self.optimizer.step();
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
-        return loss.item();
+        logger.debug(f'Actor loss: [{loss.item()}]')

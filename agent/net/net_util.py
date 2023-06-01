@@ -5,6 +5,8 @@ import torch
 from lib import callback, glb_var, util
 from agent.net import *
 
+logger = glb_var.get_value('log');
+
 def get_optimizer(optim_cfg, net):
     '''
     Get Network Parameter Optimizer
@@ -16,7 +18,7 @@ def get_optimizer(optim_cfg, net):
     elif optim_cfg['name'].lower() == 'rmsprop':
         return torch.optim.RMSprop(net.parameters(), lr = optim_cfg['lr'], alpha = optim_cfg['alpha'], weight_decay = optim_cfg['weight_decay']);
     else:
-        glb_var.get_value('logger').warning(f"Unrecognized optimizer[{optim_cfg['name']}], set default Adam optimizer");
+        logger.warning(f"Unrecognized optimizer[{optim_cfg['name']}], set default Adam optimizer");
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr']);
 
 def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
@@ -40,7 +42,7 @@ def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
             gamma = lr_schedule_cfg['gamma']
         )
     else:
-        glb_var.get_value('logger').error(f'Type of schedule [{lr_schedule_cfg["name"]} is not supported.]');
+        logger.error(f'Type of schedule [{lr_schedule_cfg["name"]} is not supported.]');
         raise callback.CustomException('LrScheduleError')
 
 def get_activation_fn(name = 'selu'):
@@ -69,7 +71,7 @@ def get_activation_fn(name = 'selu'):
     elif name.lower() == 'selu':
         return torch.nn.SELU();
     else:
-        glb_var.get_value('logger').error(f'Activation function [{name.lower()}] does not support automatic acquisition at the moment,'
+        logger.error(f'Activation function [{name.lower()}] does not support automatic acquisition at the moment,'
                                         f'please replace or add the code yourself.\nSupport list:{activations}');
         raise callback.CustomException('ActivationCfgNameError');
 
@@ -105,7 +107,7 @@ class NetUpdater():
         elif self.name.lower() == 'polyak':
             self.updater = self.net_param_polyak_update;
         else:
-            glb_var.get_value('logger').error(f'Unsupported type {self.name}, '
+            logger.error(f'Unsupported type {self.name}, '
                                               'implement it yourself or replace it with [replace, polyak]');
 
     def set_net(self, src, tgt):
@@ -132,4 +134,4 @@ class NetUpdater():
         self.epoch += 1;
         if self.epoch % self.update_step == 0:
             self.updater(self.src_net, self.tgt_net);
-            glb_var.get_value('logger').debug('Net update.')
+            logger.debug('Net update.')

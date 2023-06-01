@@ -58,6 +58,8 @@ class Logger():
         #Create a logger object
         self.logger = logging.getLogger(__name__);
         self.logger.setLevel(self.level);
+        self.logger.addHandler(self.get_console_handler());
+        self.logger.addHandler(self.get_file_handler());
 
     def get_console_handler(self):
         #Create a log handler for the console
@@ -77,8 +79,6 @@ class Logger():
         return file_handler;
 
     def get_log(self):
-        self.logger.addHandler(self.get_console_handler());
-        self.logger.addHandler(self.get_file_handler());
         return self.logger;
 
 
