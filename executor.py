@@ -6,7 +6,6 @@ from lib import glb_var, callback
 from lib.callback import Logger
 
 #TODO:Added: A mode that can be trained on top of existing models
-#TODO:logger optimization in each file
 if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):
         os.makedirs("./cache/logger");

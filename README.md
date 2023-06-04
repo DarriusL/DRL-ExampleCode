@@ -132,3 +132,9 @@ python executor.py -cfg='./config/dqn/doubledqn_cartpole_off.json' --mode='train
 python executor.py -cfg='./config/dqn/doubledqn_cartpole_per.json' --mode='train'
 ```
 
+a2c
+
+```shell
+python executor.py -cfg='./config/a2c/a2c_nstep_cartpole_on.json' --mode='train'
+```
+
