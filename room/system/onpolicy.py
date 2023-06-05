@@ -107,8 +107,7 @@ class OnPolicySystem(System):
             self.valid_not_imporve_cnt += 1;
         solved = total_rewards > self.env.solved_total_reward;
         self.best_solved = self.max_total_rewards > self.env.solved_total_reward;
-        content_head = f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - '\
-                         f'Epoch:[{epoch + 1}] - lr: [{self.agent.algorithm.optimizer.param_groups[0]["lr"]}]\n'\
+        content_head = f'[vaild - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}] - Epoch:[{epoch + 1}]\n'\
                         f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]'\
                         f'- solved(now/best): [{solved}/{self.best_solved}] - not_imporve_cnt: [{self.valid_not_imporve_cnt}]';
         glb_var.get_value('var_reporter').report(logger.info, content_head, 4);
@@ -154,5 +153,10 @@ class OnPolicySystem(System):
     def test(self):
         '''Test the model'''
         self.valid_mode();
-        self._explore()
+        self._explore();
+        batch = self.agent.memory.sample();
+        total_rewards += self.env.get_total_reward();
+        rets_mean = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma, fast = True).mean().item();
+        logger.info(f'[test - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'\
+                    f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]');
 

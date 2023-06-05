@@ -33,8 +33,9 @@ class Reinforce(Algorithm):
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
-        self.pi = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
+        self.pi = get_net(net_cfg, in_dim, out_dim, device = glb_var.get_value('device'));
         self.optimizer = net_util.get_optimizer(optim_cfg, self.pi);
+        glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"])
         #if None, then do not use
         self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
 
@@ -114,6 +115,7 @@ class Reinforce(Algorithm):
             glb_var.get_value('var_reporter').add('Entropy regularization coefficient', self.entorpy_reg_var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
+            glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"])
 
     def train_step(self, batch):
         '''training network

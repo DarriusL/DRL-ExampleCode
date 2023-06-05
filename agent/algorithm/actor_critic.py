@@ -42,31 +42,34 @@ class ActorCritic(Reinforce):
         out_dim = [out_dim, 1];
         if 'name' not in net_cfg.keys():
             #not shared
-            in_dim = in_dim*2;
+            in_dim = [in_dim]*2;
             self.is_ac_shared = False;
         elif net_cfg['name'].lower() in ['sharedmlpnet']:
             self.is_ac_shared = True;
-            logger.info('Detected as a non-shared network, the default network configuration order: actor-critic');
+            logger.info('Detected as a shared network, the default network configuration order: actor-critic');
         else:
             logger.error('Only a non-shared network configuration');
             raise callback.CustomException('NetCfgError');
         #init
-        acnet = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
-        optimizer = net_util.get_optimizer(optim_cfg, self.acnet);
+        acnet = get_net(net_cfg, in_dim, out_dim, device = glb_var.get_value('device'));
+        optimizer = net_util.get_optimizer(optim_cfg, acnet);
         #if None, then do not use
-        lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
+        lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch);
         if self.is_ac_shared:
             util.set_attr(self, dict(
                 acnet = acnet,
                 optimizer = optimizer,
                 lr_schedule = lr_schedule
             ));
+            glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"]);
         else:
             util.set_attr(self, dict(
                 acnets = acnet,
                 optimizers = optimizer,
                 lr_schedules = lr_schedule
             ));
+            glb_var.get_value('var_reporter').add('actor-lr', self.optimizers[0].param_groups[0]["lr"]);
+            glb_var.get_value('var_reporter').add('critic-lr', self.optimizers[-1].param_groups[0]["lr"]);
 
     def _cal_action_pd(self, state):
         '''
@@ -80,13 +83,17 @@ class ActorCritic(Reinforce):
         #out:[..., out_dim]
         if self.is_ac_shared:
             return self.acnet(state, is_integrated = True)[0];
-        else
+        else:
+            return self.acnets[0](state);
 
     def _cal_v(self, state):
         ''''''
         #state:[..., in_dim]
         #out:[..., 1] -> [...]
-        return self.acnet(state, is_integrated = True)[-1].squeeze(-1);
+        if self.is_ac_shared:
+            return self.acnet(state, is_integrated = True)[-1].squeeze(-1);
+        else:
+            return self.acnets[-1](state).squeeze(-1);
 
     def _cal_mc_advs_and_v_tgts(self, batch, v_preds):
         '''Estimate Q using Monte Carlo simulations and use this to calculate advantages
@@ -108,6 +115,7 @@ class ActorCritic(Reinforce):
         #advs and v_tgt don't need to accumulate grad
         v_preds = v_preds.detach()
         with torch.no_grad():
+            #is a value
             next_v_pred = self._cal_v(batch['states'][-1]);
         #it is the estimate of Q and also the estimate of v_tgt
         rets = alg_util.cal_nstep_returns(batch['rewards'], batch['dones'], next_v_pred, self.gamma, self.n_step_returns);
@@ -121,7 +129,8 @@ class ActorCritic(Reinforce):
         #advs and v_tgt don't need to accumulate grad
         v_preds = v_preds.detach()
         with torch.no_grad():
-            next_v_pred = self._cal_v(batch['states'][-1]);
+            #[1]
+            next_v_pred = self._cal_v(batch['states'][-1].unsqueeze(0));
         #[batch+1]
         v_preds = torch.cat((v_preds, next_v_pred), dim = -1);
         #[batch]
@@ -131,26 +140,52 @@ class ActorCritic(Reinforce):
         return advs, v_tgts
     
     def _cal_policy_loss(self, batch, advs):
+        ''''''
         return super()._cal_loss(batch, advs);
 
     def _cal_value_loss(self, v_preds, v_tgts):
+        ''''''
         loss = self.value_loss_var*torch.nn.MSELoss()(v_preds.float(), v_tgts.float());
         logger.debug(f'Critic loss: [{loss.item()}]')
         return loss;
 
+    def update(self):
+        '''Update'''
+        if self.entorpy_reg_var_shedule is not None:
+            self.entorpy_reg_var = self.entorpy_reg_var_shedule.step();
+            glb_var.get_value('var_reporter').add('Entropy regularization coefficient', self.entorpy_reg_var);
+        if self.is_ac_shared and self.lr_schedule is not None:
+            self.lr_schedule.step();
+            glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"]);
+        elif not self.is_ac_shared and self.lr_schedules is not None:
+            for schduler in self.lr_schedules:
+                schduler.step();
+            glb_var.get_value('var_reporter').add('actor-lr', self.optimizers[0].param_groups[0]["lr"]);
+            glb_var.get_value('var_reporter').add('critic-lr', self.optimizers[-1].param_groups[0]["lr"]);
+
+    
     def train_step(self, batch):
         ''''''
         v_preds = self._cal_v(batch['states']);
         advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
         policy_loss = self._cal_policy_loss(batch, advs);
+        self._check_nan(policy_loss);
         value_loss = self._cal_value_loss(v_preds, v_tgts);
-        loss = policy_loss + value_loss;
-        self.optimizer.zero_grad();
-        self._check_nan(loss);
-        loss.backward();
-        #TODO: shared and not shared, different
-        torch.nn.utils.clip_grad_norm_(self.acnet.parameters(), max_norm = 0.5);
-        self.optimizer.step();
+        self._check_nan(value_loss);
+        if self.is_ac_shared:
+            loss = policy_loss + value_loss;
+            self.optimizer.zero_grad();
+            loss.backward();
+            torch.nn.utils.clip_grad_norm_(self.acnet.parameters(), max_norm = 0.5);
+            self.optimizer.step();
+        else:
+            for net, optimzer, loss in zip(self.acnets, self.optimizers, [policy_loss, value_loss]):
+                optimzer.zero_grad();
+                loss.backward();
+                torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
+                optimzer.step();
+            loss = policy_loss + value_loss;
+        logger.debug(f'ActorCritic Total loss:{loss.item()}');
         if hasattr(torch.cuda, 'empty_cache'):
             torch.cuda.empty_cache();
         

@@ -16,6 +16,7 @@ def get_optimizer(optim_cfg, net):
         optims = [];
         nets, optim_cfgs = net, optim_cfg;
         assert len(optim_cfgs) == len(nets), 'The length of optim_cfgs and nets should be the same';
+        
         for i, cfg in enumerate(optim_cfgs.values()):
             optims.append(get_optimizer(cfg, nets[i]))
         return optims;

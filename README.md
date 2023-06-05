@@ -135,7 +135,9 @@ python executor.py -cfg='./config/dqn/doubledqn_cartpole_per.json' --mode='train
 a2c
 
 ```shell
-python executor.py -cfg='./config/a2c/a2c_nstep_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./config/a2c/a2c_shared_nstep_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
 
 ```
 
