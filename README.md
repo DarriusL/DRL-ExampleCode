@@ -111,14 +111,14 @@ reinforce
 ```shell
 python executor.py -cfg='./config/reinforce/reinforce_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_mc.json' --mode='train'
-python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_nstep.json' --mode='train'
+python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_onbatch.json' --mode='train'
 python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
 sarsa
 
 ```shell
-python executor.py -cfg='./config/sarsa/sarsa_cartpole_nstep.json' --mode='train'
+python executor.py -cfg='./config/sarsa/sarsa_cartpole_onbatch.json' --mode='train'
 python executor.py -cfg='./config/sarsa/sarsa_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./cache/data/sarsa/cartpole/[-opt-]/config.json' --mode='test'
 ```
@@ -135,6 +135,7 @@ python executor.py -cfg='./config/dqn/doubledqn_cartpole_per.json' --mode='train
 a2c
 
 ```shell
-python executor.py -cfg='./config/a2c/a2c_nstep_cartpole_on.json' --mode='train'
+python executor.py -cfg='./config/a2c/a2c_nstep_cartpole_onbatch.json' --mode='train'
+
 ```
 

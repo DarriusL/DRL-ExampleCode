@@ -4,7 +4,7 @@
 from agent.algorithm.reinforce import Reinforce
 from agent.algorithm import alg_util
 from agent.net import get_net, net_util
-from lib import glb_var, callback
+from lib import glb_var, callback, util
 import torch
 
 logger = glb_var.get_value('log')
@@ -17,6 +17,7 @@ class ActorCritic(Reinforce):
         self.is_onpolicy = True;
         self.action_strategy = alg_util.action_default;
         glb_var.get_value('var_reporter').add('Value loss coefficient', self.value_loss_var);
+        
         #cal advs method
         if self.n_step_returns is not None and self.lbd is not None:
             self._cal_advs_and_v_tgts = self._cal_mc_advs_and_v_tgts;
@@ -39,10 +40,33 @@ class ActorCritic(Reinforce):
         '''
         #output1 is from actor, output2 is from critic
         out_dim = [out_dim, 1];
-        self.acnet = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
-        self.optimizer = net_util.get_optimizer(optim_cfg, self.acnet);
+        if 'name' not in net_cfg.keys():
+            #not shared
+            in_dim = in_dim*2;
+            self.is_ac_shared = False;
+        elif net_cfg['name'].lower() in ['sharedmlpnet']:
+            self.is_ac_shared = True;
+            logger.info('Detected as a non-shared network, the default network configuration order: actor-critic');
+        else:
+            logger.error('Only a non-shared network configuration');
+            raise callback.CustomException('NetCfgError');
+        #init
+        acnet = get_net(net_cfg, in_dim, out_dim).to(glb_var.get_value('device'));
+        optimizer = net_util.get_optimizer(optim_cfg, self.acnet);
         #if None, then do not use
-        self.lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
+        lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, self.optimizer, max_epoch);
+        if self.is_ac_shared:
+            util.set_attr(self, dict(
+                acnet = acnet,
+                optimizer = optimizer,
+                lr_schedule = lr_schedule
+            ));
+        else:
+            util.set_attr(self, dict(
+                acnets = acnet,
+                optimizers = optimizer,
+                lr_schedules = lr_schedule
+            ));
 
     def _cal_action_pd(self, state):
         '''
@@ -54,7 +78,9 @@ class ActorCritic(Reinforce):
         '''
         #state:[..., in_dim]
         #out:[..., out_dim]
-        return self.acnet(state, is_integrated = True)[0];
+        if self.is_ac_shared:
+            return self.acnet(state, is_integrated = True)[0];
+        else
 
     def _cal_v(self, state):
         ''''''
@@ -129,4 +155,3 @@ class ActorCritic(Reinforce):
             torch.cuda.empty_cache();
         
         
-

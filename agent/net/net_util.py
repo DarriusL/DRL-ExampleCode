@@ -11,6 +11,15 @@ def get_optimizer(optim_cfg, net):
     '''
     Get Network Parameter Optimizer
     '''
+    if 'name' not in optim_cfg.keys():
+        #optim cfgs for nets
+        optims = [];
+        nets, optim_cfgs = net, optim_cfg;
+        assert len(optim_cfgs) == len(nets), 'The length of optim_cfgs and nets should be the same';
+        for i, cfg in enumerate(optim_cfgs.values()):
+            optims.append(get_optimizer(cfg, nets[i]))
+        return optims;
+
     if optim_cfg['name'].lower() == 'adam':
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
     elif optim_cfg['name'].lower() == 'adamw':
@@ -25,7 +34,16 @@ def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
     '''Get the learning rate scheduler'''
     if lr_schedule_cfg is None:
         return None;
-    elif lr_schedule_cfg['name'].lower() == 'onecyclelr':
+
+    if 'name' not in lr_schedule_cfg.keys():
+        #cfgs for multiple optimizers
+        schedulers = [];
+        lr_schedule_cfgs, optimizers = lr_schedule_cfg, optimizer;
+        for i, cfg in enumerate(lr_schedule_cfgs.values()):
+            schedulers.append(get_lr_schedule(cfg, optimizers[i], max_epoch));
+        return schedulers;
+
+    if lr_schedule_cfg['name'].lower() == 'onecyclelr':
         return torch.optim.lr_scheduler.OneCycleLR(
             optimizer = optimizer, 
             max_lr = lr_schedule_cfg['lr_max'],
