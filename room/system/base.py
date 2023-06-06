@@ -4,6 +4,7 @@
 from lib import glb_var, json_util, util
 from dataclasses import dataclass
 from agent.memory import *
+from agent.memory.onpolicy import OnPolicyMemory
 import os
 
 logger = glb_var.get_value('log');
@@ -28,10 +29,14 @@ class System():
                 os.makedirs(self.save_path);
             self.cfg['model_path'] = self.save_path + '/alg.model';
             json_util.jsonsave(self.cfg, self.save_path + '/config.json'); 
+        #generate memory
         memory = get_memory(cfg['agent_cfg']['memory_cfg']);
         self.agent = Agent(memory, algorithm);
-        glb_var.set_value('agent', self.agent)
-        util.set_attr(self.agent, cfg['agent_cfg'], except_type = dict)
+        glb_var.set_value('agent', self.agent);
+        util.set_attr(self.agent, cfg['agent_cfg'], except_type = dict);
+        if isinstance(memory, OnPolicyMemory) and self.agent.explore_times_per_train > 1:
+            #set explore times
+            memory.multiple_explore(self.agent.explore_times_per_train);
         self.env.reset();
 
     def _check_done(self):

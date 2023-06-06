@@ -6,6 +6,7 @@ from agent.memory.offpolicy import *
 from lib import glb_var, callback
 
 logger = glb_var.get_value('log');
+__all__ = ['get_memory']
 
 def get_memory(mmy_cfg):
     '''Obtain the corresponding memory according to the configuration

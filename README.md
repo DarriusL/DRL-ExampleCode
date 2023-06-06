@@ -1,8 +1,6 @@
 # DRL-ExampleCode
 
-code reference: [SLM_Lab](https://github.com/kengz/SLM-Lab)
-
-Implementation code when learning deep reinforcement learning code(from SLM_Lab mainly).
+Implementation code when learning deep reinforcement learning code.
 
 ## Environment configuration
 
@@ -140,4 +138,12 @@ python executor.py -cfg='./config/a2c/a2c_shared_mc_cartpole_mc.json' --mode='tr
 python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --mode='train'
 python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
 ```
+
+
+
+## Refrence
+
+[1]Graesser, L., Keng, W. L., & Gupta, A. (2021). Foundations of Deep Reinforcement Learning: Theory and Practice in Python. Apress.
+
+[2]Kengz. (2019). SLM-Lab: Modular Deep Reinforcement Learning framework in PyTorch [GitHub repository]. https://github.com/kengz/SLM-Lab
 

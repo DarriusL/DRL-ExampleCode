@@ -38,7 +38,7 @@
             "name":"OnPolicy"
         },
         "max_epoch":10000,
-        "explore_times_per_train":1,
+        "explore_times_per_train":2,
         "train_exp_size":1,
         "batch_learn_times_per_train":4
     },

@@ -26,7 +26,6 @@ class OnPolicyMemory(Memory):
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
         #multiple expolre
         self.explore_times = 1;
-        self.explore_cnt = 0;
         self.reset();
     
     def multiple_explore(self, times):
@@ -59,11 +58,8 @@ class OnPolicyMemory(Memory):
         
         self.stock += 1;
         if done:
-            self.explore_cnt += 1;
-            if self.explore_cnt >= self.explore_times:
-                self.explore_cnt = 0;
-                for key in self.exp_keys:
-                    getattr(self, key).append(self.cur_exp[key]);
+            for key in self.exp_keys:
+                getattr(self, key).append(self.cur_exp[key]);
     
     def _batch_to_tensor(self, batch):
         '''Convert a batch to a format for torch training
@@ -73,7 +69,7 @@ class OnPolicyMemory(Memory):
         batch['next_states']:[T, in_dim]
         '''
         for key in batch.keys():
-            batch[key] = torch.from_numpy(np.array(batch[key])).to(glb_var.get_value('device')).squeeze();
+            batch[key] = torch.from_numpy(np.concatenate(batch[key])).to(glb_var.get_value('device')).squeeze();
         return batch;
 
     def sample(self):

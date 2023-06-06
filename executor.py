@@ -5,7 +5,7 @@ import os, logging, argparse
 from lib import glb_var, callback
 from lib.callback import Logger
 
-#TODO:Added: A mode that can be trained on top of existing models
+#TODO:Add: A mode that can be trained on existing models
 #TODO:Notes on each algorithm
 if __name__ == '__main__':
     if not os.path.exists("./cache/logger"):

@@ -28,9 +28,9 @@ class OnPolicySystem(System):
 
     def _check_train_point(self, epoch):
         '''Check if the conditions for a training session are met'''
-        if len(self.agent.memory.states) == self.agent.train_exp_size:
+        if len(self.agent.memory.states) == self.agent.train_exp_size*self.agent.explore_times_per_train:
             logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
-                f'Training requirements [{self.agent.train_exp_size}].');
+                f'Training requirements [{self.agent.train_exp_size * self.agent.explore_times_per_train}].');
             return True;
         else:
             return False;
@@ -126,8 +126,7 @@ class OnPolicySystem(System):
         for epoch in range(self.agent.max_epoch):
             #train mode
             self.train_mode();
-            for _ in range(self.explore_times_per_train):
-                self._explore();
+            self._explore();
             #start to train
             self._train_epoch(epoch);
             #algorithm update
