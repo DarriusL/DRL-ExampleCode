@@ -19,7 +19,7 @@ class ActorCritic(Reinforce):
         glb_var.get_value('var_reporter').add('Value loss coefficient', self.value_loss_var);
         
         #cal advs method
-        if self.n_step_returns is not None and self.lbd is not None:
+        if self.n_step_returns is None and self.lbd is None:
             self._cal_advs_and_v_tgts = self._cal_mc_advs_and_v_tgts;
         elif self.n_step_returns is not None and self.lbd is None:
             #use n-step

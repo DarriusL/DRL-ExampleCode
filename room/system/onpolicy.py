@@ -126,7 +126,8 @@ class OnPolicySystem(System):
         for epoch in range(self.agent.max_epoch):
             #train mode
             self.train_mode();
-            self._explore();
+            for _ in range(self.explore_times_per_train):
+                self._explore();
             #start to train
             self._train_epoch(epoch);
             #algorithm update
@@ -155,8 +156,8 @@ class OnPolicySystem(System):
         self.valid_mode();
         self._explore();
         batch = self.agent.memory.sample();
-        total_rewards += self.env.get_total_reward();
+        total_rewards = self.env.get_total_reward();
         rets_mean = alg_util.cal_returns(batch['rewards'], batch['dones'], self.agent.algorithm.gamma, fast = True).mean().item();
         logger.info(f'[test - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'\
-                    f'Mean Returns: [{rets_mean:.3f}] - Total Rewards(now/best): [{total_rewards}/{self.max_total_rewards}]');
+                    f'Mean Returns: [{rets_mean:.3f}] - Total Rewards: [{total_rewards}]');
 

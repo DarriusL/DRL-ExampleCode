@@ -115,6 +115,10 @@ def get_mlpnet(hid_layers, activation_fn, in_dim, out_dim):
         ]
     return torch.nn.Sequential(*layers);
 
+def net_param_copy(src, tgt):
+    '''Copy network parameters from src to tgt'''
+    tgt.load_state_dict(src.state_dict());
+
 class NetUpdater():
     '''for updating the network'''
     def __init__(self, net_update_cfg) -> None:
@@ -122,7 +126,7 @@ class NetUpdater():
         self.epoch = 0;
         #generate net update policy
         if self.name.lower() == 'replace':
-            self.updater = self.net_param_copy;
+            self.updater = net_param_copy;
         elif self.name.lower() == 'polyak':
             self.updater = self.net_param_polyak_update;
         else:
@@ -133,10 +137,6 @@ class NetUpdater():
         ''''''
         self.src_net = src;
         self.tgt_net = tgt;
-
-    def net_param_copy(self, src, tgt):
-        '''Copy network parameters from src to tgt'''
-        tgt.load_state_dict(src.state_dict());
 
     def net_param_polyak_update(self, src, tgt):
         '''Polyak updata policy

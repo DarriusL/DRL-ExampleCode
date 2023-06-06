@@ -27,6 +27,7 @@
         "memory_cfg":{
             "name":"OnPolicy"
         },
+        "explore_times_per_train":1,
         "train_exp_size":1,
         "max_epoch":10000
     },

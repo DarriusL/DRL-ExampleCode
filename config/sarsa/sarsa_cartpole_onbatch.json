@@ -31,6 +31,7 @@
         "memory_cfg":{
             "name":"OnPolicyBatch"
         },
+        "explore_times_per_train":1,
         "train_exp_size":512,
         "max_epoch":100000
     },

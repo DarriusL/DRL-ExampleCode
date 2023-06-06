@@ -24,7 +24,14 @@ class OnPolicyMemory(Memory):
         self.is_episodic_exp = True;
         #Experience data that needs to be stored
         self.exp_keys = ['states', 'actions', 'rewards', 'next_states', 'dones'];
+        #multiple expolre
+        self.explore_times = 1;
+        self.explore_cnt = 0;
         self.reset();
+    
+    def multiple_explore(self, times):
+        ''''''
+        self.explore_times = times;
     
     def train(self):
         pass
@@ -40,6 +47,7 @@ class OnPolicyMemory(Memory):
         self.exp_latest = [None] * len(self.exp_keys);
         self.cur_exp = {k: [] for k in self.exp_keys};
         self.stock = 0;
+        self.explore_cnt = 0;
 
     def update(self, state, action, reward, next_state, done):
         '''Add experience to experience memory
@@ -51,8 +59,11 @@ class OnPolicyMemory(Memory):
         
         self.stock += 1;
         if done:
-            for key in self.exp_keys:
-                getattr(self, key).append(self.cur_exp[key]);
+            self.explore_cnt += 1;
+            if self.explore_cnt >= self.explore_times:
+                self.explore_cnt = 0;
+                for key in self.exp_keys:
+                    getattr(self, key).append(self.cur_exp[key]);
     
     def _batch_to_tensor(self, batch):
         '''Convert a batch to a format for torch training

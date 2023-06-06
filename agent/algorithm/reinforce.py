@@ -27,6 +27,7 @@ class Reinforce(Algorithm):
         if algorithm_cfg['entropy_reg_var_cfg'] is not None:
             self.entorpy_reg_var_shedule = alg_util.VarScheduler(algorithm_cfg['entropy_reg_var_cfg']);
             self.entorpy_reg_var = self.entorpy_reg_var_shedule.var_start;
+            glb_var.get_value('var_reporter').add('Entropy regularization coefficient', self.entorpy_reg_var)
         else:
             self.entorpy_reg_var_shedule = None;
     
