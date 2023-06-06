@@ -20,7 +20,7 @@
                 "star_epoch":0,
                 "end_epoch":5000
             },
-            "batch_learn_times_per_train":4
+            "batch_split_type":"seq"
         },
         "net_cfg":{
             "name":"MLPNet",
@@ -42,6 +42,7 @@
         },
         "explore_times_per_train":4,
         "train_exp_size":1,
+        "batch_learn_times_per_train":4,
         "max_epoch":10000
     },
     "env":{

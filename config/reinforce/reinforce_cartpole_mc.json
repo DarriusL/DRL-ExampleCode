@@ -6,8 +6,7 @@
             "gamma":0.99,
             "rets_mean_baseline":true,
             "policy_loss_var":1,
-            "entropy_reg_var_cfg":null,
-            "batch_learn_times_per_train":4
+            "entropy_reg_var_cfg":null
         },
         "net_cfg":{
             "name":"MLPNet",
@@ -29,6 +28,7 @@
         },
         "explore_times_per_train":1,
         "train_exp_size":1,
+        "batch_learn_times_per_train":4,
         "max_epoch":10000
     },
     "env":{

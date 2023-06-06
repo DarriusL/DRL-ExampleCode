@@ -6,7 +6,7 @@ from agent.algorithm import alg_util
 from agent.net import *
 from agent.memory.offpolicy import PrioritizedMemory
 from lib import glb_var
-import torch
+import torch, copy
 
 logger = glb_var.get_value('log')
 
@@ -94,9 +94,8 @@ class TargetDQN(DQN):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
         super().init_net(net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
-        self.q_target_net = get_net(net_cfg, in_dim, out_dim, device = glb_var.get_value('device'));
         #Initialize q_target_net with q_net
-        net_util.net_param_copy(self.q_net, self.q_target_net)
+        self.q_target_net = copy.deepcopy(self.q_net);
         self.net_updater.set_net(self.q_net, self.q_target_net);
         self.q_eval_net = self.q_target_net;
 

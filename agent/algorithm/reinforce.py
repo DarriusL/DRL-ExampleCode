@@ -52,17 +52,6 @@ class Reinforce(Algorithm):
         #return [..., out_dim]
         return self.pi(state);
 
-    def _cal_action_pd_batch(self, batch):
-        '''Calculate the logarithm value of the action probability of a batch
-
-        Parameters:
-        -----------
-        batch:dict
-            The value in it has been converted to tensor
-        '''
-        states_batch = batch['states'];
-        return self._cal_action_pd(states_batch);
-
     @torch.no_grad()
     def act(self, state, is_training):
         '''take action on input state
@@ -97,7 +86,7 @@ class Reinforce(Algorithm):
         '''Calculate policy gradient loss for REINFORCE
         '''
         #[T, out_dim]
-        action_batch_logits = self._cal_action_pd_batch(batch);
+        action_batch_logits = self._cal_action_pd(batch['states']);
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[T]
         log_probs = action_pd_batch.log_prob(batch['actions']);

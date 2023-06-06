@@ -10,7 +10,13 @@ import torch
 logger = glb_var.get_value('log')
 
 class ActorCritic(Reinforce):
-    '''Actor Critic Algorithm'''
+    '''Actor Critic Algorithm
+    
+    Notes:
+    ------
+    1.OnPolicy algorithm
+
+    '''
     def __init__(self, algorithm_cfg) -> None:
         super().__init__(algorithm_cfg);
         #label for onpolicy algorithm

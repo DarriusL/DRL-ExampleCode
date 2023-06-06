@@ -12,8 +12,7 @@
                 "var_end":0.005,
                 "star_epoch":0,
                 "end_epoch":50000
-            },
-            "batch_learn_times_per_train":4
+            }
         },
         "net_cfg":{
             "name":"MLPNet",
@@ -35,6 +34,7 @@
         },
         "explore_times_per_train":1,
         "train_exp_size":512,
+        "batch_learn_times_per_train":4,
         "max_epoch":100000
     },
     "env":{
