@@ -28,7 +28,7 @@ class OpenaiEnv(Env):
     ...
     >>> env.valid();
     ...
-    The trian mode will not automatically reset the environment, but the valid mode will
+    The trian mode will not automatically reset the environment when switch, but the valid mode will
     '''
     def __init__(self, env_cfg) -> None:
         super().__init__(env_cfg);
@@ -84,13 +84,13 @@ class OpenaiEnv(Env):
 
 
     def reset(self):
-        ''''''
+        '''Reset the env'''
         self.main_body.total_reward = 0;
         self.main_body.t = 0;
         return self.main_body.env.reset();
 
     def step(self, action):
-        ''''''
+        '''Change the env through the action'''
         self.main_body.t += 1;
         next_state, reward, done, info1, info2 = self.main_body.env.step(action);
         self.main_body.total_reward += reward;
@@ -99,7 +99,6 @@ class OpenaiEnv(Env):
         return next_state, reward, done, info1, info2;
 
     def render(self):
-        ''''''
         self.main_body.env.render();
 
 

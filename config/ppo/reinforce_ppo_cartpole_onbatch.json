@@ -21,7 +21,7 @@
                 "end_epoch":0
             },
             "batch_split_type":"seq",
-            "batch_num":8
+            "batch_num":32
         },
         "net_cfg":{
             "name":"MLPNet",
@@ -30,7 +30,7 @@
         },
         "optimizer_cfg":{
             "name":"Adam",
-            "lr":1e-3,
+            "lr":2e-3,
             "weight_decay": 1e-08,
             "betas": [
                 0.9,
@@ -39,10 +39,10 @@
         },
         "lr_schedule_cfg":null,
         "memory_cfg":{
-            "name":"OnPolicy"
+            "name":"OnPolicyBatch"
         },
-        "explore_times_per_train":4,
-        "train_exp_size":1,
+        "explore_times_per_train":16,
+        "train_exp_size":64,
         "batch_learn_times_per_train":4,
         "max_epoch":10000
     },

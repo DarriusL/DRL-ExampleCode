@@ -3,12 +3,19 @@
 # @Email  : darrius.lei@outlook.com
 from room.system.onpolicy import OnPolicySystem
 from lib import callback, glb_var
-import numpy as np
 
 logger = glb_var.get_value('log');
 
 class OffPolicySystem(OnPolicySystem):
-    '''System for offpolicy agent'''
+    '''System for offpolicy agent
+
+    Notes:
+    ------
+    The following algorithm is applicable to the system.
+    `Algorithm:DQN, TargetDQN, DoubleDQN
+    `Memory:OffPolicyMemory, PER
+
+    '''
     def __init__(self, cfg, algorithm, env) -> None:
         super().__init__(cfg, algorithm, env);
 
@@ -67,10 +74,11 @@ class OffPolicySystem(OnPolicySystem):
             state = next_state;
 
     def _train_epoch(self, epoch):
-      for _ in range(self.agent.train_times_per_epoch):
-            batch = self.agent.memory.sample();
-            for _ in range(self.agent.batch_learn_times_per_train):
-                self.agent.algorithm.train_step(batch);
+        '''train the model of algorithm'''
+        for _ in range(self.agent.train_times_per_epoch):
+                batch = self.agent.memory.sample();
+                for _ in range(self.agent.batch_learn_times_per_train):
+                    self.agent.algorithm.train_step(batch);
 
     def train(self):
         return super().train();

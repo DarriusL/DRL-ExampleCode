@@ -23,9 +23,14 @@ def get_memory(mmy_cfg):
         logger.error(f'Type of memory [{mmy_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');
 
-def get_batch_split(type):
-    #TODO:complete it
-    pass
+def get_batch_split(split_type):
+    '''Get batch split
+    split_type: seq/random
+    '''
+    if split_type.lower() == 'seq':
+        return batch_seq_split;
+    elif split_type.lower() == 'random':
+        return batch_random_split;
 
 def batch_seq_split(batch, subbatch_num, add_origin = False):
     '''Serialize a batch subserial
@@ -55,5 +60,31 @@ def batch_seq_split(batch, subbatch_num, add_origin = False):
     return subbatchs
 
 def batch_random_split(batch, subbatch_num, add_origin = False):
-    #TODO:complete it
-    pass
+    '''Randomly split a batch
+
+    Parameters:
+    ----------
+    batch:dict
+
+    subbatch_num:int
+
+    add_origin:bool,optional
+        Whether to add the original batch
+        default:False
+    '''
+    batch_len = len(batch['rewards']);
+    subbatch_len = int(batch_len/subbatch_num);
+    idxs = np.arange(batch_len);
+    np.random.shuffle(idxs);
+    subbatch_idxs = np.array_split(idxs[:subbatch_len*subbatch_num], subbatch_num);
+    if batch_len%subbatch_num != 0:
+        subbatch_idxs.append(idxs[subbatch_len*subbatch_num:]);
+    subbatches = [];
+    for subbatch_idx in subbatch_idxs:
+        subbatch = {};
+        for key, value in batch.items():
+            subbatch[key] = value[subbatch_idx];
+        subbatches.append(subbatch);
+    if add_origin:
+        subbatches.append(batch);
+    return subbatches;

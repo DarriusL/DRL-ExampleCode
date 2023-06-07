@@ -8,8 +8,15 @@ from agent.net import *
 logger = glb_var.get_value('log');
 
 def get_optimizer(optim_cfg, net):
-    '''
-    Get Network Parameter Optimizer
+    '''Get Network Parameter Optimizer
+
+    Parameters:
+    -----------
+    optim_cfg:dict
+        configuration of optimizer
+
+    net:torch.Module
+        Networks that need to optimize parameters
     '''
     if 'name' not in optim_cfg.keys():
         #optim cfgs for nets
@@ -32,7 +39,18 @@ def get_optimizer(optim_cfg, net):
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr']);
 
 def get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch):
-    '''Get the learning rate scheduler'''
+    '''Get the learning rate scheduler
+    
+    Parameters:
+    -----------
+    lr_schedule_cfg:dict
+        Configuration of the learning rate scheduler
+    
+    optimzer:torch.optim
+        An optimizer that requires learning rate scheduling
+    
+    max_epoch:int
+    '''
     if lr_schedule_cfg is None:
         return None;
 

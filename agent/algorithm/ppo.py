@@ -1,10 +1,9 @@
 # @Time   : 2023.06.06
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
-from agent.algorithm import reinforce
+from agent.algorithm import reinforce, alg_util, actor_critic
 from agent.net import *
 from agent.memory import *
-from agent import alg_util
 from lib import glb_var
 import copy, torch
 
@@ -21,9 +20,16 @@ class Reinforce(reinforce.Reinforce):
         self.batch_spliter = get_batch_split(self.batch_split_type);
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
+        ''''''
         super().init_net(net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
         #init an old pi net
         self.old_pi = copy.deepcopy(self.pi);
+        #
+        self.net_updater = net_util.NetUpdater({
+            "name":"replace",
+            "update_step":1
+        });
+        self.net_updater.set_net(self.pi, self.old_pi);
 
     def _cal_action_pd(self, state, net = None):
         '''
@@ -32,6 +38,8 @@ class Reinforce(reinforce.Reinforce):
         Parameters:
         ----------
         state:torch.Tensor
+
+        net
         '''
         #x:[..., in_dim]
         #return [..., out_dim]
@@ -92,10 +100,10 @@ class Reinforce(reinforce.Reinforce):
         #so probs = e^log_probs
         #probs/probs_old = e^(log_probs - log_probs)
         weights = torch.exp(log_probs - log_probs_old);
-        logger.debug(f'weights: {weights}');
+        
         loss_1 = rets * weights;
         loss_2 = rets * torch.clamp(weights, 1 - self.clip_var, 1 + self.clip_var);
-        loss = - self.policy_loss_var * torch.min((loss_1, loss_2)).mean();
+        loss = - self.policy_loss_var * torch.min(loss_1, loss_2).mean();
         logger.debug(f'cliped policy grad loss: {loss.item()}');
 
         if self.entorpy_reg_var_shedule is not None:
@@ -111,11 +119,11 @@ class Reinforce(reinforce.Reinforce):
         self.clip_var = self.clip_var_var_shedule.step();
         glb_var.get_value('var_reporter').add('Policy gradient clipping coefficient', self.clip_var);
         #update old pi net
-        net_util.net_param_copy(self.pi, self.old_pi);
+        self.net_updater.update();
 
     def train_step(self, batch):
         '''Train network'''
-        subbatches = self.batch_spliter(batch);
+        subbatches = self.batch_spliter(batch, self.batch_num, add_origin = True);
         for subbatch in subbatches:
             rets = self._cal_rets(subbatch);
             loss = self._cal_loss(subbatch, rets);
@@ -126,4 +134,73 @@ class Reinforce(reinforce.Reinforce):
             if hasattr(torch.cuda, 'empty_cache'):
                 torch.cuda.empty_cache();
             logger.debug(f'Actor loss: [{loss.item()}]');
+
+class ActorCritic(Reinforce, actor_critic.ActorCritic):
+    def __init__(self, algorithm_cfg) -> None:
+        actor_critic.ActorCritic.__init__(self, algorithm_cfg);
+        Reinforce.__init__(self, algorithm_cfg);
+        self.is_onpolicy = True;
+
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
+        actor_critic.ActorCritic.init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
+        if self.is_ac_shared:
+            #notes:if shared, then old_pi contains the network of critics
+            src_net = self.acnet;
+        else:
+            src_net = self.acnets[0];
+        self.old_pi = copy.deepcopy(src_net);
+        self.net_updater = net_util.NetUpdater({
+            "name":"replace",
+            "update_step":1
+        });
+        self.net_updater.set_net(src_net, self.old_pi);
+
+    def _cal_action_pd(self, state, net = None):
+        '''
+        Action distribution probability in the input state
+
+        Parameters:
+        ----------
+        state:torch.Tensor
+
+        net
+        '''
+        #x:[..., in_dim]
+        #return [..., out_dim]
+        if net is not None:
+            # for old net
+            return net(state) if not self.is_ac_shared else net(state, is_integrated = True)[0];
+        return actor_critic.ActorCritic._cal_action_pd(self, state);
+
+    def act(self, state, is_training):
+        ''''''
+        return Reinforce.act(self, state, is_training);
+
+    def update(self):
+        ''''''
+        actor_critic.ActorCritic.update(self);
+        self.clip_var = self.clip_var_var_shedule.step();
+        glb_var.get_value('var_reporter').add('Policy gradient clipping coefficient', self.clip_var);
+        #update old pi net
+        self.net_updater.update();
+
+    def _cal_policy_loss(self, batch, advs):
+        ''''''
+        return Reinforce._cal_loss(self, batch, advs);
+
+    def _cal_v(self, state):
+        ''''''
+        return actor_critic.ActorCritic._cal_v(self, state);
+
+    def _cal_value_loss(self, v_preds, v_tgts):
+        ''''''
+        return actor_critic.ActorCritic._cal_value_loss(self, v_preds, v_tgts);
+
+    def train_step(self, batch):
+        subbatches = self.batch_spliter(batch, self.batch_num, add_origin = True);
+        for subbatch in subbatches:
+            actor_critic.ActorCritic.train_step(self, subbatch);
+        
+
+
 

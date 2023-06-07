@@ -139,6 +139,13 @@ python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --
 python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
+ppo
+
+```shell
+python executor.py -cfg='./config/ppo/reinforce_ppo_cartpole_mc.json' --mode='train'
+python executor.py -cfg='./config/ppo/reinforce_ppo_cartpole_onbatch.json' --mode='train'
+```
+
 
 
 ## Refrence

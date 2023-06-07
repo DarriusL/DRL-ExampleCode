@@ -20,6 +20,7 @@ if __name__ == '__main__':
 
     args = parse.parse_args();
 
+    #set logger level by mode
     log_level = logging.DEBUG if args.dev else logging.INFO;
     log = Logger(
         level = log_level,

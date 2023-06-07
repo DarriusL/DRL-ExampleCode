@@ -77,10 +77,9 @@ class Reinforce(Algorithm):
     def _cal_rets(self, batch):
         '''Calculate returns'''
         rets = alg_util.cal_returns(batch['rewards'], batch['dones'], self.gamma);
-        rets_mean = rets.mean();
         if self.rets_mean_baseline:
             rets = alg_util.rets_mean_baseline(rets);
-        return rets, rets_mean.item();
+        return rets;
 
     def _cal_loss(self, batch, rets):
         '''Calculate policy gradient loss for REINFORCE
@@ -115,7 +114,7 @@ class Reinforce(Algorithm):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
-        rets, _ = self._cal_rets(batch);
+        rets = self._cal_rets(batch);
         loss = self._cal_loss(batch, rets);
         self.optimizer.zero_grad();
         self._check_nan(loss);

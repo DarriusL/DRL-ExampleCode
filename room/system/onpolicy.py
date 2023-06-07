@@ -10,7 +10,18 @@ import torch
 logger = glb_var.get_value('log');
 
 class OnPolicySystem(System):
-    '''System for onpolicy agent'''
+    '''System for onpolicy agent
+    
+    Notes:
+    ------
+    The following algorithm is applicable to the system.
+    `Algorithm:Reinforce,SARSA,A2C,Reinforce(PPO), A2C(PPO)
+    `Memory:OnPolicyMemory,OnPolicyBatchMemory
+
+    *At the same time, 
+    *the Off-Policy algorithm can also use the system in combination with the above memory, 
+    *but the training efficiency will be lower
+    '''
     def __init__(self, cfg, algorithm, env) -> None:
         super().__init__(cfg, algorithm, env);
         self.rets_mean_valid = [];
@@ -28,12 +39,9 @@ class OnPolicySystem(System):
 
     def _check_train_point(self, epoch):
         '''Check if the conditions for a training session are met'''
-        if len(self.agent.memory.states) == self.agent.train_exp_size*self.agent.explore_times_per_train:
-            logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
-                f'Training requirements [{self.agent.train_exp_size * self.agent.explore_times_per_train}].');
-            return True;
-        else:
-            return False;
+        logger.debug(f'Current experience length: [{len(self.agent.memory.states)}]\n' 
+            f'Training requirements [{self.agent.train_exp_size * self.agent.explore_times_per_train}].');
+        return len(self.agent.memory.states) == self.agent.train_exp_size*self.agent.explore_times_per_train;
 
     def _check_valid_point(self, epoch):
         '''Check if the conditions for a validation session are met'''
@@ -61,15 +69,14 @@ class OnPolicySystem(System):
                     break;
                 elif done:
                     #not enough data collected
-                    self.env.reset();
-                    next_state = self.env.get_state();
+                    next_state = self.env.reset();
             elif done:
                 #it's test mode
                 break;
             state = next_state;
 
     def _save(self):
-        '''Save model
+        '''Save the algorithm model
         '''
         torch.save(self.agent.algorithm, self.cfg['model_path']);
     
@@ -84,6 +91,7 @@ class OnPolicySystem(System):
         '''Model validation per epoch'''
         total_rewards = 0;
         rets_mean = 0;
+        #valid
         for _ in range(self.cfg['valid']['valid_times']):
             self.valid_mode();
             self._explore();
@@ -95,12 +103,15 @@ class OnPolicySystem(System):
         rets_mean /= self.cfg['valid']['valid_times'];
         self.total_rewards_valid.append(total_rewards);
         self.rets_mean_valid.append(rets_mean);
+        #check save point
         if total_rewards > self.max_total_rewards:
+            #better, save
             self._save()
             self.max_total_rewards = total_rewards;
             self.valid_not_imporve_cnt = 0;
         elif total_rewards == self.max_total_rewards:
             if max(self.rets_mean_valid) == rets_mean: 
+                #better, save
                 self._save();
             self.valid_not_imporve_cnt += 1;
         else:
@@ -126,6 +137,7 @@ class OnPolicySystem(System):
         for epoch in range(self.agent.max_epoch):
             #train mode
             self.train_mode();
+            #collect experiences
             self._explore();
             #start to train
             self._train_epoch(epoch);
