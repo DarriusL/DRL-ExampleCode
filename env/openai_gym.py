@@ -87,7 +87,8 @@ class OpenaiEnv(Env):
         '''Reset the env'''
         self.main_body.total_reward = 0;
         self.main_body.t = 0;
-        return self.main_body.env.reset();
+        state, _ = self.main_body.env.reset();
+        return state;
 
     def step(self, action):
         '''Change the env through the action'''

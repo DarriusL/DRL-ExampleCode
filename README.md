@@ -104,7 +104,8 @@ options:
 
 ### qiuck start
 
-reinforce
+- reinforce
+
 
 ```shell
 python executor.py -cfg='./config/reinforce/reinforce_cartpole_mc.json' --mode='train'
@@ -113,7 +114,8 @@ python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_onbatc
 python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
-sarsa
+- sarsa
+
 
 ```shell
 python executor.py -cfg='./config/sarsa/sarsa_cartpole_onbatch.json' --mode='train'
@@ -121,7 +123,8 @@ python executor.py -cfg='./config/sarsa/sarsa_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./cache/data/sarsa/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
-dqn
+- dqn
+
 
 ```shell
 python executor.py -cfg='./config/dqn/dqn_cartpole_off.json' --mode='train'
@@ -130,7 +133,8 @@ python executor.py -cfg='./config/dqn/doubledqn_cartpole_off.json' --mode='train
 python executor.py -cfg='./config/dqn/doubledqn_cartpole_per.json' --mode='train'
 ```
 
-a2c
+- a2c
+
 
 ```shell
 python executor.py -cfg='./config/a2c/a2c_shared_nstep_cartpole_onbatch.json' --mode='train'
@@ -139,11 +143,17 @@ python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --
 python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
-ppo
+- ppo
+
+notes:A2C (PPO) using nstep calculation advantage may cause model parameters to be nan due to gradient disappearance or gradient explosion, so the model is limited to GAE calculation.
 
 ```shell
 python executor.py -cfg='./config/ppo/reinforce_ppo_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./config/ppo/reinforce_ppo_cartpole_onbatch.json' --mode='train'
+
+python executor.py -cfg='./config/ppo/a2c_ppo_shared_gae_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./config/ppo/a2c_ppo_unshared_gae_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./cache/data/ppo_a2c/cartpole/[-opt-]/config.json' --mode='test'
 ```
 
 

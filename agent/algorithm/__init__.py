@@ -30,6 +30,8 @@ def get_alg(alg_cfg):
             return ActorCritic(alg_cfg);
         elif alg_cfg['name'].lower() == 'ppo_reinforce':
             return ppo.Reinforce(alg_cfg);
+        elif alg_cfg['name'].lower() in ['ppo_a2c']:
+            return ppo.ActorCritic(alg_cfg);
         else:
             logger.error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');

@@ -4,7 +4,7 @@
 from agent.algorithm import reinforce, alg_util, actor_critic
 from agent.net import *
 from agent.memory import *
-from lib import glb_var
+from lib import glb_var, callback
 import copy, torch
 
 logger = glb_var.get_value('log')
@@ -16,7 +16,7 @@ class Reinforce(reinforce.Reinforce):
         super().__init__(algorithm_cfg);
         self.clip_var_var_shedule = alg_util.VarScheduler(algorithm_cfg['clip_var_cfg']);
         self.clip_var = self.clip_var_var_shedule.var_start;
-        glb_var.get_value('var_reporter').add('Clip coefficient', self.clip_var);
+        glb_var.get_value('var_reporter').add('Policy gradient clipping coefficient', self.clip_var);
         self.batch_spliter = get_batch_split(self.batch_split_type);
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
@@ -89,6 +89,14 @@ class Reinforce(reinforce.Reinforce):
         '''
         #[batch_size, out_dim]
         action_batch_logits = self._cal_action_pd(batch['states']);
+        # if torch.any(torch.isnan(action_batch_logits)):
+        #     print(action_batch_logits);
+        #     print(batch['states']);
+        #     if self.is_ac_shared:
+        #         torch.save(self.acnet, './cache/problem.model');
+        #     else:
+        #         torch.save(self.acnets[0], './cache/problem.model');
+        #     raise RuntimeError;
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[batch_size]
         log_probs = action_pd_batch.log_prob(batch['actions']);
@@ -125,21 +133,18 @@ class Reinforce(reinforce.Reinforce):
         '''Train network'''
         subbatches = self.batch_spliter(batch, self.batch_num, add_origin = True);
         for subbatch in subbatches:
-            rets = self._cal_rets(subbatch);
-            loss = self._cal_loss(subbatch, rets);
-            self.optimizer.zero_grad();
-            self._check_nan(loss);
-            loss.backward();
-            self.optimizer.step();
-            if hasattr(torch.cuda, 'empty_cache'):
-                torch.cuda.empty_cache();
-            logger.debug(f'Actor loss: [{loss.item()}]');
+            super().train_step(subbatch);
 
 class ActorCritic(Reinforce, actor_critic.ActorCritic):
     def __init__(self, algorithm_cfg) -> None:
         actor_critic.ActorCritic.__init__(self, algorithm_cfg);
         Reinforce.__init__(self, algorithm_cfg);
         self.is_onpolicy = True;
+        #notes:ppo use gae for calculate advs
+        self._cal_advs_and_v_tgts = self._cal_gae_advs_and_v_tgts;
+        if self.lbd is None:
+            logger.error(f'ActorCritic(PPO) use gae to calculate advantages, but no lambda value is set.');
+            raise callback.CustomException('CfgError');
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         actor_critic.ActorCritic.init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
@@ -197,9 +202,12 @@ class ActorCritic(Reinforce, actor_critic.ActorCritic):
         return actor_critic.ActorCritic._cal_value_loss(self, v_preds, v_tgts);
 
     def train_step(self, batch):
-        subbatches = self.batch_spliter(batch, self.batch_num, add_origin = True);
+        with torch.no_grad():
+            v_preds = self._cal_v(batch['states']);
+            batch['advs'], batch['v_tgt'] = self._cal_advs_and_v_tgts(batch, v_preds);
+        subbatches = self.batch_spliter(batch, self.batch_num, add_origin = False);
         for subbatch in subbatches:
-            actor_critic.ActorCritic.train_step(self, subbatch);
+            actor_critic.ActorCritic._train_main(self, subbatch, subbatch['advs'], subbatch['v_tgt']);
         
 
 

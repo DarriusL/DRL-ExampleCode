@@ -105,8 +105,6 @@ class ActorCritic(Reinforce):
         '''Estimate Q using Monte Carlo simulations and use this to calculate advantages
         '''
         #v_preds:[batch]
-        #advs and v_tgt don't need to accumulate grad
-        v_preds = v_preds.detach()
         #rets:[batch]
         #Mixed trajectory, cannot use [fast]
         rets = alg_util.cal_returns(batch['rewards'], batch['dones'], self.gamma, fast = False);
@@ -118,8 +116,6 @@ class ActorCritic(Reinforce):
     def _cal_nstep_advs_and_v_tgts(self, batch, v_preds):
         '''Using temporal difference learning to estimate Q and then calculate the advantage'''
         #v_preds:[batch]
-        #advs and v_tgt don't need to accumulate grad
-        v_preds = v_preds.detach()
         with torch.no_grad():
             #is a value
             next_v_pred = self._cal_v(batch['states'][-1]);
@@ -132,8 +128,6 @@ class ActorCritic(Reinforce):
     def _cal_gae_advs_and_v_tgts(self, batch, v_preds):
         '''Calculate GAE and estimate v_tgt'''
         #v_preds:[batch]
-        #advs and v_tgt don't need to accumulate grad
-        v_preds = v_preds.detach()
         with torch.no_grad():
             #[1]
             next_v_pred = self._cal_v(batch['states'][-1].unsqueeze(0));
@@ -172,8 +166,14 @@ class ActorCritic(Reinforce):
     
     def train_step(self, batch):
         ''''''
+        with torch.no_grad():
+            v_preds = self._cal_v(batch['states']);
+            advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
+        self._train_main(batch, advs, v_tgts);
+
+    def _train_main(self, batch, advs, v_tgts):
+        ''''''
         v_preds = self._cal_v(batch['states']);
-        advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
         policy_loss = self._cal_policy_loss(batch, advs);
         self._check_nan(policy_loss);
         value_loss = self._cal_value_loss(v_preds, v_tgts);
