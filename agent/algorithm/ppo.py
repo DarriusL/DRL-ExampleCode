@@ -89,14 +89,6 @@ class Reinforce(reinforce.Reinforce):
         '''
         #[batch_size, out_dim]
         action_batch_logits = self._cal_action_pd(batch['states']);
-        # if torch.any(torch.isnan(action_batch_logits)):
-        #     print(action_batch_logits);
-        #     print(batch['states']);
-        #     if self.is_ac_shared:
-        #         torch.save(self.acnet, './cache/problem.model');
-        #     else:
-        #         torch.save(self.acnets[0], './cache/problem.model');
-        #     raise RuntimeError;
         action_pd_batch = torch.distributions.Categorical(logits = action_batch_logits);
         #[batch_size]
         log_probs = action_pd_batch.log_prob(batch['actions']);

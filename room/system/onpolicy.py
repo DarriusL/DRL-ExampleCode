@@ -5,7 +5,7 @@ from agent.algorithm import *
 from lib import util, callback, glb_var
 from room.system.base import System
 import numpy as np
-import torch
+import torch, copy
 
 logger = glb_var.get_value('log');
 
@@ -172,3 +172,96 @@ class OnPolicySystem(System):
         logger.info(f'[test - {self.agent.algorithm.name} - {self.agent.memory.name} - {self.env.name}]\n'\
                     f'Mean Returns: [{rets_mean:.3f}] - Total Rewards: [{total_rewards}]');
 
+class OnPolicyAsynSubSystem(OnPolicySystem):
+    ''''''
+    def __init__(self, cfg, algorithm, env) -> None:
+        super().__init__(cfg, algorithm, env);
+
+    def init_sys(self, rank, shared_alg, optimzer):
+        ''''''
+        self.env.set_seed(rank);
+        torch.manual_seed(rank);
+        cfg = self.cfg;
+        state_dim, action_dim = self.env.get_state_and_action_dim();
+        self.agent.algorithm.init_net(
+            cfg['agent_cfg']['net_cfg'],
+            None,
+            cfg['agent_cfg']['lr_schedule_cfg'],
+            state_dim,
+            action_dim,
+            cfg['agent_cfg']['max_epoch'],
+            optimzer
+        );
+        self.agent.algorithm.set_shared_net(shared_alg);
+    
+    def train(self, lock, stop_event, cnt):
+        ''''''
+        for epoch in range(self.agent.max_epoch):
+            if stop_event.is_set():
+                break;
+            with lock:
+                self.agent.algorithm.load_sharednet();
+            #train mode
+            self.train_mode();
+            #collect experiences
+            self._explore();
+            #start to train
+            self._train_epoch(epoch);
+            #algorithm update
+            self.agent.algorithm.update();
+            with lock:
+                cnt.value += 1;
+
+    def valid(self, lock, stop_event, cnt):
+        ''''''
+        while True:
+            #Here, take valid_step as the starting point
+            if cnt.value > self.cfg['valid']['valid_step']:
+                with lock:
+                    self.agent.algorithm.load_sharednet();
+                    cnt_value = cnt.value;
+                if self._valid_epoch(cnt_value):
+                    stop_event.set();
+                    break;
+        #plot rets
+        util.single_plot(
+            np.arange(len(self.rets_mean_valid)) + 1,
+            self.rets_mean_valid,
+            'valid_times', 'mean_rets', self.save_path + '/mean_rets.png');
+        #plot total rewards
+        util.single_plot(
+            np.arange(len(self.total_rewards_valid)) + 1,
+            self.total_rewards_valid,
+            'valid_times', 'rewards', self.save_path + '/rewards.png');
+        
+
+class OnPolicyAsynSystem(OnPolicySystem):
+    ''''''
+    def __init__(self, cfg, algorithm, env) -> None:
+        super().__init__(cfg, algorithm, env);
+
+    def train(self):
+        ''''''
+        subtrainsystems = [OnPolicyAsynSubSystem(
+            copy.deepcopy(self.cfg),
+            get_alg(self.cfg['agent_cfg']['algorithm_cfg']),
+            copy.deepcopy(self.env)
+        ) for _ in range(self.agent.asyn_num + 1)];
+        optimizer = self.agent.algorithm.get_optimizer();
+        for rank, sys in enumerate(subtrainsystems):
+            sys.init_sys(rank, self.agent.algorithm, optimizer);
+        subvalidsystem = copy.deepcopy(subtrainsystems[-1]);
+        del subtrainsystems[-1];
+        cnt = torch.multiprocessing.Value('i', 0);
+        lock = torch.multiprocessing.Lock();
+        stop_event = torch.multiprocessing.Event();
+        processes = [];
+        for sys in subtrainsystems:
+            p = torch.multiprocessing.Process(target = sys.train, args = (lock, stop_event, cnt));
+            p.start();
+            processes.append(p);
+        p_valid = torch.multiprocessing.Process(target = subvalidsystem.valid, args = (lock, stop_event, cnt));
+        p_valid.start();
+        processes.append(p_valid);
+        for p in processes:
+            p.join()

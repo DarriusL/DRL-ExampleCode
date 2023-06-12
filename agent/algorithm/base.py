@@ -12,6 +12,8 @@ class Algorithm():
         util.set_attr(self, algorithm_cfg, except_type = dict);
         glb_var.get_value('var_reporter').add('Gamma', self.gamma);
         self.action_strategy = None;
+        #Tags for asynchronous parallel computing
+        self.is_asyn = False;
 
     def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
         logger.error('Method needs to be called after being implemented');

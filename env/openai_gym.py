@@ -82,6 +82,9 @@ class OpenaiEnv(Env):
                 self._save_train_env();
         self.reset();     
 
+    def set_seed(self, seed):
+        '''Set the seed of the env.'''
+        np.random.seed(seed);
 
     def reset(self):
         '''Reset the env'''

@@ -14,24 +14,31 @@ def get_alg(alg_cfg):
     '''Obtain the corresponding algorithm object according to the configuration'''
     try:
         AlgClass = getattr(algorithm, alg_cfg['name']);
-        return AlgClass(alg_cfg);
+        alg = AlgClass(alg_cfg);
     except:
         if alg_cfg['name'].lower() == 'reinforce':
-            return Reinforce(alg_cfg);
+            alg = Reinforce(alg_cfg);
         elif alg_cfg['name'].lower() == 'sarsa':
-            return Sarsa(alg_cfg);
+            alg = Sarsa(alg_cfg);
         elif alg_cfg['name'].lower() == 'dqn':
-            return DQN(alg_cfg);
+            alg = DQN(alg_cfg);
         elif alg_cfg['name'].lower() == 'targetdqn':
-            return TargetDQN(alg_cfg);
+            alg = TargetDQN(alg_cfg);
         elif alg_cfg['name'].lower() == 'doubledqn':
-            return DoubleDQN(alg_cfg);
-        elif alg_cfg['name'].lower() in ['a2c']:
-            return ActorCritic(alg_cfg);
+            alg = DoubleDQN(alg_cfg);
+        elif alg_cfg['name'].lower() in ['a2c', 'a3c']:
+            alg = ActorCritic(alg_cfg);
         elif alg_cfg['name'].lower() == 'ppo_reinforce':
-            return ppo.Reinforce(alg_cfg);
+            alg = ppo.Reinforce(alg_cfg);
         elif alg_cfg['name'].lower() in ['ppo_a2c']:
-            return ppo.ActorCritic(alg_cfg);
+            alg = ppo.ActorCritic(alg_cfg);
         else:
             logger.error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');
+
+        if alg_cfg['name'].lower() in ['a3c']:
+            alg.is_asyn = True;
+        else:
+            alg.is_asyn = False;
+
+    return alg;

@@ -41,7 +41,7 @@ class ActorCritic(Reinforce):
             raise callback.CustomException('CfgError');
     
 
-    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch, optimizer = None):
         '''Initialize the network and initialize optimizer and learning rate scheduler
         '''
         #output1 is from actor, output2 is from critic
@@ -58,12 +58,15 @@ class ActorCritic(Reinforce):
             raise callback.CustomException('NetCfgError');
         #init
         acnet = get_net(net_cfg, in_dim, out_dim, device = glb_var.get_value('device'));
-        optimizer = net_util.get_optimizer(optim_cfg, acnet);
+        if optimizer is None:
+            #if is not none, then is a3c train sys
+            optimizer = net_util.get_optimizer(optim_cfg, acnet);
         #if None, then do not use
         lr_schedule = net_util.get_lr_schedule(lr_schedule_cfg, optimizer, max_epoch);
         if self.is_ac_shared:
             util.set_attr(self, dict(
                 acnet = acnet,
+                optim_net = acnet,
                 optimizer = optimizer,
                 lr_schedule = lr_schedule
             ));
@@ -71,11 +74,59 @@ class ActorCritic(Reinforce):
         else:
             util.set_attr(self, dict(
                 acnets = acnet,
+                optim_nets = acnet,
                 optimizers = optimizer,
                 lr_schedules = lr_schedule
             ));
             glb_var.get_value('var_reporter').add('actor-lr', self.optimizers[0].param_groups[0]["lr"]);
             glb_var.get_value('var_reporter').add('critic-lr', self.optimizers[-1].param_groups[0]["lr"]);
+    
+    def get_optimizer(self):
+        ''''''
+        if self.is_ac_shared:
+            return self.optimizer;
+        else:
+            return self.optimizers;
+    
+    def share_memory(self):
+        '''Share Net memory in A3C algorithm'''
+        if self.is_ac_shared:
+            self.acnet.share_memory();
+        else:
+            self.acnets[0].share_memory();
+            self.acnets[1].share_memory();
+    
+    def set_shared_net(self, alg):
+        '''Set shared net in A3C algorithm'''
+        if self.is_ac_shared:
+            self.shared_net = alg.acnet;
+        else:
+            self.shared_nets = alg.acnets;
+    
+    def load_sharednet(self):
+        '''Load shared net is A3C algorithm'''
+        if self.is_ac_shared:
+            net_util.net_param_copy(self.shared_net, self.acnet);
+        else:
+            net_util.net_param_copy(self.shared_nets[0], self.acnets[0]);
+            net_util.net_param_copy(self.shared_nets[1], self.acnets[1]);
+    
+    def _set_shared_grads(self):
+        ''''''
+        def __set_shared_param(net, shared_net):
+            for param, shared_param in zip(net.parameters(), shared_net.parameters()):
+                if shared_param.grad is None:
+                    shared_param._grad = param.grad
+                else:
+                    shared_param.grad += param.grad
+        if self.is_asyn:
+            if self.is_ac_shared:
+                __set_shared_param(self.acnet, self.shared_net);
+            else:
+                for net, shared_net in zip(self.acnet, self.shared_nets):
+                    __set_shared_param(net, shared_net);
+        else:
+            pass;
 
     def _cal_action_pd(self, state):
         '''
@@ -183,12 +234,14 @@ class ActorCritic(Reinforce):
             self.optimizer.zero_grad();
             loss.backward();
             torch.nn.utils.clip_grad_norm_(self.acnet.parameters(), max_norm = 0.5);
+            self._set_shared_grads();
             self.optimizer.step();
         else:
             for net, optimzer, loss in zip(self.acnets, self.optimizers, [policy_loss, value_loss]):
                 optimzer.zero_grad();
                 loss.backward();
                 torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
+                self._set_shared_grads();
                 optimzer.step();
             loss = policy_loss + value_loss;
         logger.debug(f'ActorCritic Total loss:{loss.item()}');

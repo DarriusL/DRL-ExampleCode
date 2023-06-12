@@ -21,7 +21,11 @@ class Env():
     def __init__(self, env_cfg) -> None:
         util.set_attr(self, env_cfg);
         self.is_training = True;
-    
+
+    def set_seed(self, seed):
+        logger.error('Method needs to be called after being implemented');
+        raise NotImplementedError;
+
     def train(self):
         '''train mode'''
         self.is_training = True;
