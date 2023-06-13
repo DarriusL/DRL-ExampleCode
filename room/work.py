@@ -23,19 +23,19 @@ def run_work(cfg_path, mode):
     #parameter report dict
     glb_var.set_value('var_reporter', callback.VarReporter());
 
+    #load config
+    cfg = json_util.jsonload(cfg_path);
+    if cfg['model_path'] is not None:
+        cfg['model_path'], _ = os.path.split(cfg_path);
+        cfg['model_path'] += '/alg.model';
     #set device
-    if lab_cfg['general']:
+    if cfg['is_gpu_available']:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu");
     else:
         device = torch.device("cpu");
     glb_var.set_value('device', device);
     #report device
     glb_var.get_value('var_reporter').add('device', device);
-    #load config
-    cfg = json_util.jsonload(cfg_path);
-    if cfg['model_path'] is not None:
-        cfg['model_path'], _ = os.path.split(cfg_path);
-        cfg['model_path'] += '/alg.model';
     #generate system
     system = get_system(cfg);
 

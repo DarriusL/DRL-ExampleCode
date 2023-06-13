@@ -164,3 +164,5 @@ python executor.py -cfg='./cache/data/ppo_a2c/cartpole/[-opt-]/config.json' --mo
 
 [2]Kengz. (2019). SLM-Lab: Modular Deep Reinforcement Learning framework in PyTorch [GitHub repository]. https://github.com/kengz/SLM-Lab
 
+[3]Kostrikov, Ilya. PyTorch A3C. GitHub, July 9, 2018, https://github.com/ikostrikov/pytorch-a3c.
+

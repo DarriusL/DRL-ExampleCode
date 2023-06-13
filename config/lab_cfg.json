@@ -2,8 +2,5 @@
     "constant":{
         "dropout_rate":0.5,
         "save_dir":"./cache/data"
-    },
-    "general":{
-        "is_gpu_available":true
     }
 }

@@ -44,6 +44,7 @@
         "survival_T":100000
     },
     "model_path":null,
+    "is_gpu_available":true,
     "valid":{
         "valid_step":10,
         "valid_times":5,

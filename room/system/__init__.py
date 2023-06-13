@@ -31,7 +31,10 @@ def get_system(cfg):
         );
     #Generating systems based on on-policy and off-policy algorithms
     if algorithm.is_onpolicy:
-        return OnPolicySystem(cfg, algorithm, env);
+        if algorithm.is_asyn:
+            return OnPolicyAsynSystem(cfg, algorithm, env);
+        else:
+            return OnPolicySystem(cfg, algorithm, env);
     elif not algorithm.is_onpolicy:
         return OffPolicySystem(cfg, algorithm, env);
     else:

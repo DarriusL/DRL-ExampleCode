@@ -5,7 +5,7 @@ from agent.algorithm import *
 from lib import util, callback, glb_var
 from room.system.base import System
 import numpy as np
-import torch, copy
+import torch, copy, time
 
 logger = glb_var.get_value('log');
 
@@ -181,6 +181,7 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
         ''''''
         self.env.set_seed(rank);
         torch.manual_seed(rank);
+        self.rank = rank;
         cfg = self.cfg;
         state_dim, action_dim = self.env.get_state_and_action_dim();
         self.agent.algorithm.init_net(
@@ -194,8 +195,9 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
         );
         self.agent.algorithm.set_shared_net(shared_alg);
     
-    def train(self, lock, stop_event, cnt):
+    def train(self, lock, stop_event, cnt, rank, shared_alg, optimzer):
         ''''''
+        self.init_sys(rank, shared_alg, optimzer);
         for epoch in range(self.agent.max_epoch):
             if stop_event.is_set():
                 break;
@@ -211,9 +213,11 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
             self.agent.algorithm.update();
             with lock:
                 cnt.value += 1;
+        logger.info(f'Process {self.rank} end.')
 
-    def valid(self, lock, stop_event, cnt):
+    def valid(self, lock, stop_event, cnt, rank, shared_alg, optimzer):
         ''''''
+        self.init_sys(rank, shared_alg, optimzer)
         while True:
             #Here, take valid_step as the starting point
             if cnt.value > self.cfg['valid']['valid_step']:
@@ -223,6 +227,7 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
                 if self._valid_epoch(cnt_value):
                     stop_event.set();
                     break;
+                time.sleep(60);
         #plot rets
         util.single_plot(
             np.arange(len(self.rets_mean_valid)) + 1,
@@ -248,19 +253,24 @@ class OnPolicyAsynSystem(OnPolicySystem):
             copy.deepcopy(self.env)
         ) for _ in range(self.agent.asyn_num + 1)];
         optimizer = self.agent.algorithm.get_optimizer();
-        for rank, sys in enumerate(subtrainsystems):
-            sys.init_sys(rank, self.agent.algorithm, optimizer);
+        self.agent.algorithm.share_memory();
         subvalidsystem = copy.deepcopy(subtrainsystems[-1]);
         del subtrainsystems[-1];
         cnt = torch.multiprocessing.Value('i', 0);
         lock = torch.multiprocessing.Lock();
         stop_event = torch.multiprocessing.Event();
         processes = [];
-        for sys in subtrainsystems:
-            p = torch.multiprocessing.Process(target = sys.train, args = (lock, stop_event, cnt));
+        for rank, sys in enumerate(subtrainsystems):
+            p = torch.multiprocessing.Process(
+                target = sys.train, 
+                args = (lock, stop_event, cnt, rank, self.agent.algorithm, optimizer)
+                );
             p.start();
             processes.append(p);
-        p_valid = torch.multiprocessing.Process(target = subvalidsystem.valid, args = (lock, stop_event, cnt));
+        p_valid = torch.multiprocessing.Process(
+            target = subvalidsystem.valid, 
+            args = (lock, stop_event, cnt, rank + 1, self.agent.algorithm, optimizer)
+            );
         p_valid.start();
         processes.append(p_valid);
         for p in processes:
