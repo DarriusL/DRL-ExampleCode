@@ -195,7 +195,7 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
         );
         self.agent.algorithm.set_shared_net(shared_alg);
     
-    def train(self, lock, stop_event, cnt, rank, shared_alg, optimzer):
+    def train(self, lock, stop_event, cnt, end_cnt, rank, shared_alg, optimzer):
         ''''''
         self.init_sys(rank, shared_alg, optimzer);
         for epoch in range(self.agent.max_epoch):
@@ -213,9 +213,11 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
             self.agent.algorithm.update();
             with lock:
                 cnt.value += 1;
-        logger.info(f'Process {self.rank} end.')
+        logger.info(f'Process {self.rank} end.');
+        with lock:
+            end_cnt.value += 1;
 
-    def valid(self, lock, stop_event, cnt, rank, shared_alg, optimzer):
+    def valid(self, lock, stop_event, cnt, end_cnt, rank, shared_alg, optimzer):
         ''''''
         self.init_sys(rank, shared_alg, optimzer)
         while True:
@@ -227,17 +229,22 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
                 if self._valid_epoch(cnt_value):
                     stop_event.set();
                     break;
+                if end_cnt == self.rank:
+                    break;
                 time.sleep(60);
-        #plot rets
-        util.single_plot(
-            np.arange(len(self.rets_mean_valid)) + 1,
-            self.rets_mean_valid,
-            'valid_times', 'mean_rets', self.save_path + '/mean_rets.png');
-        #plot total rewards
-        util.single_plot(
-            np.arange(len(self.total_rewards_valid)) + 1,
-            self.total_rewards_valid,
-            'valid_times', 'rewards', self.save_path + '/rewards.png');
+        logger.info(f'Saved Model Information:\nSolved: [{self.best_solved}] - Mean total rewards: [{self.max_total_rewards}]'
+                    f'\nSaved path:{self.save_path}');
+        if end_cnt != self.rank:
+            #plot rets
+            util.single_plot(
+                np.arange(len(self.rets_mean_valid)) + 1,
+                self.rets_mean_valid,
+                'valid_times', 'mean_rets', self.save_path + '/mean_rets.png');
+            #plot total rewards
+            util.single_plot(
+                np.arange(len(self.total_rewards_valid)) + 1,
+                self.total_rewards_valid,
+                'valid_times', 'rewards', self.save_path + '/rewards.png');
         
 
 class OnPolicyAsynSystem(OnPolicySystem):
@@ -257,19 +264,21 @@ class OnPolicyAsynSystem(OnPolicySystem):
         subvalidsystem = copy.deepcopy(subtrainsystems[-1]);
         del subtrainsystems[-1];
         cnt = torch.multiprocessing.Value('i', 0);
+        end_cnt = torch.multiprocessing.Value('i', 0);
         lock = torch.multiprocessing.Lock();
+        glb_var.set_value('lock', lock);
         stop_event = torch.multiprocessing.Event();
         processes = [];
         for rank, sys in enumerate(subtrainsystems):
             p = torch.multiprocessing.Process(
                 target = sys.train, 
-                args = (lock, stop_event, cnt, rank, self.agent.algorithm, optimizer)
+                args = (lock, stop_event, cnt, end_cnt, rank, self.agent.algorithm, optimizer)
                 );
             p.start();
             processes.append(p);
         p_valid = torch.multiprocessing.Process(
             target = subvalidsystem.valid, 
-            args = (lock, stop_event, cnt, rank + 1, self.agent.algorithm, optimizer)
+            args = (lock, stop_event, cnt, end_cnt, rank + 1, self.agent.algorithm, optimizer)
             );
         p_valid.start();
         processes.append(p_valid);

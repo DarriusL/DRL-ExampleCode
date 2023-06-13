@@ -70,6 +70,7 @@ class ActorCritic(Reinforce):
                 optimizer = optimizer,
                 lr_schedule = lr_schedule
             ));
+            self.optim_net = acnet;
             glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"]);
         else:
             util.set_attr(self, dict(
@@ -78,6 +79,7 @@ class ActorCritic(Reinforce):
                 optimizers = optimizer,
                 lr_schedules = lr_schedule
             ));
+            self.optim_nets = acnet;
             glb_var.get_value('var_reporter').add('actor-lr', self.optimizers[0].param_groups[0]["lr"]);
             glb_var.get_value('var_reporter').add('critic-lr', self.optimizers[-1].param_groups[0]["lr"]);
     
@@ -123,7 +125,7 @@ class ActorCritic(Reinforce):
             if self.is_ac_shared:
                 __set_shared_param(self.acnet, self.shared_net);
             else:
-                for net, shared_net in zip(self.acnet, self.shared_nets):
+                for net, shared_net in zip(self.acnets, self.shared_nets):
                     __set_shared_param(net, shared_net);
         else:
             pass;
@@ -221,6 +223,21 @@ class ActorCritic(Reinforce):
             v_preds = self._cal_v(batch['states']);
             advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
         self._train_main(batch, advs, v_tgts);
+    
+    def _optim_net(self, loss, net, optimizer = None):
+        ''''''
+        def __optim(loss, net, optimizer):
+            loss.backward();
+            torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
+            self._set_shared_grads();
+            optimizer.step();
+        if optimizer is None:
+            optimizer = self.optimizer;
+        if not self.is_asyn:
+            __optim(loss, net, optimizer);
+        else:
+            with glb_var.get_value('lock'):
+                __optim(loss, net, optimizer);
 
     def _train_main(self, batch, advs, v_tgts):
         ''''''
@@ -232,17 +249,11 @@ class ActorCritic(Reinforce):
         if self.is_ac_shared:
             loss = policy_loss + value_loss;
             self.optimizer.zero_grad();
-            loss.backward();
-            torch.nn.utils.clip_grad_norm_(self.acnet.parameters(), max_norm = 0.5);
-            self._set_shared_grads();
-            self.optimizer.step();
+            self._optim_net(loss, self.acnet, self.optimizer);
         else:
             for net, optimzer, loss in zip(self.acnets, self.optimizers, [policy_loss, value_loss]):
                 optimzer.zero_grad();
-                loss.backward();
-                torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
-                self._set_shared_grads();
-                optimzer.step();
+                self._optim_net(loss, net, optimzer);
             loss = policy_loss + value_loss;
         logger.debug(f'ActorCritic Total loss:{loss.item()}');
         if hasattr(torch.cuda, 'empty_cache'):
