@@ -160,6 +160,8 @@ python executor.py -cfg='./cache/data/ppo_a2c/cartpole/[-opt-]/config.json' --mo
 
 ```shell
 python executor.py -cfg='./config/a3c/a3c_shared_nstep_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./config/a3c/a3c_unshared_gae_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./cache/data/a3c/cartpole/shared_nstep_t100000/config.json' --mode='test'
 ```
 
 
