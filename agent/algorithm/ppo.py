@@ -138,8 +138,8 @@ class ActorCritic(Reinforce, actor_critic.ActorCritic):
             logger.error(f'ActorCritic(PPO) use gae to calculate advantages, but no lambda value is set.');
             raise callback.CustomException('CfgError');
 
-    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch):
-        actor_critic.ActorCritic.init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch);
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch, optimizer = None):
+        actor_critic.ActorCritic.init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch, optimizer);
         if self.is_ac_shared:
             #notes:if shared, then old_pi contains the network of critics
             src_net = self.acnet;
