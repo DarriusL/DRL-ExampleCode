@@ -173,12 +173,17 @@ class OnPolicySystem(System):
                     f'Mean Returns: [{rets_mean:.3f}] - Total Rewards: [{total_rewards}]');
 
 class OnPolicyAsynSubSystem(OnPolicySystem):
-    ''''''
+    '''Asynchronous Parallel System Subsystem
+
+    Notes:
+    ------
+    A system can only be used for one of the training or simulation.
+    '''
     def __init__(self, cfg, algorithm, env) -> None:
         super().__init__(cfg, algorithm, env);
 
     def init_sys(self, rank, shared_alg, optimzer):
-        ''''''
+        '''System additional initialization functions'''
         self.env.set_seed(rank);
         torch.manual_seed(rank);
         self.rank = rank;
@@ -196,7 +201,7 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
         self.agent.algorithm.set_shared_net(shared_alg);
     
     def train(self, lock, stop_event, cnt, end_cnt, rank, shared_alg, optimzer):
-        ''''''
+        '''Train process'''
         self.init_sys(rank, shared_alg, optimzer);
         for epoch in range(self.agent.max_epoch):
             if stop_event.is_set():
@@ -218,7 +223,7 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
             end_cnt.value += 1;
 
     def valid(self, lock, stop_event, cnt, end_cnt, rank, shared_alg, optimzer):
-        ''''''
+        '''Valid process'''
         self.init_sys(rank, shared_alg, optimzer)
         while True:
             #Here, take valid_step as the starting point
@@ -248,12 +253,19 @@ class OnPolicyAsynSubSystem(OnPolicySystem):
         
 
 class OnPolicyAsynSystem(OnPolicySystem):
-    ''''''
+    '''Asynchronous Parallel System
+
+    Refrence:
+    ---------
+    [1]https://github.com/ikostrikov/pytorch-a3c/blob/master/my_optim.py
+    [2]https://github.com/pytorch/pytorch/blob/main/torch/optim/adam.py
+    [3]https://zhuanlan.zhihu.com/p/346205754
+    '''
     def __init__(self, cfg, algorithm, env) -> None:
         super().__init__(cfg, algorithm, env);
 
     def train(self):
-        ''''''
+        '''Train the model.'''
         subtrainsystems = [OnPolicyAsynSubSystem(
             copy.deepcopy(self.cfg),
             get_alg(self.cfg['agent_cfg']['algorithm_cfg']),

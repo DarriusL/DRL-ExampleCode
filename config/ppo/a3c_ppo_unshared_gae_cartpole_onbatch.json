@@ -24,7 +24,7 @@
             "n_step_returns":null,
             "lbd":0.95,
             "batch_split_type":"random",
-            "batch_num":1
+            "batch_num":4
         },
         "net_cfg":{
             "actor_net_cfg":{
@@ -63,9 +63,9 @@
             "name":"OnPolicyBatch"
         },
         "max_epoch":10000,
-        "explore_times_per_train":1,
-        "train_exp_size":128,
-        "batch_learn_times_per_train":4,
+        "explore_times_per_train":4,
+        "train_exp_size":64,
+        "batch_learn_times_per_train":2,
         "asyn_num":3
     },
     "env":{

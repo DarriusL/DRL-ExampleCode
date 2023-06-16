@@ -156,6 +156,7 @@ python executor.py -cfg='./config/ppo/a2c_ppo_unshared_gae_cartpole_onbatch.json
 python executor.py -cfg='./cache/data/ppo_a2c/cartpole/[-opt-]/config.json' --mode='test'
 
 python executor.py -cfg='./config/ppo/a3c_ppo_shared_gae_cartpole_onbatch.json' --mode='train'
+python executor.py -cfg='./config/ppo/a3c_ppo_unshared_gae_cartpole_onbatch.json' --mode='train'
 ```
 
 - a3c

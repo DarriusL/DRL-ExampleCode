@@ -9,6 +9,8 @@ import copy, torch
 
 logger = glb_var.get_value('log')
 
+#TODO: A3C with PPO will experience gradient disappearance or gradient explosion during training.
+
 class Reinforce(reinforce.Reinforce):
     '''REINFORCE with PPO
     '''
