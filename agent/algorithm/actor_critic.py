@@ -224,20 +224,22 @@ class ActorCritic(Reinforce):
             advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
         self._train_main(batch, advs, v_tgts);
     
+    def _suboptim_net(self, loss, net, optimizer):
+        ''''''
+        loss.backward();
+        torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
+        self._set_shared_grads();
+        optimizer.step();
+    
     def _optim_net(self, loss, net, optimizer = None):
         ''''''
-        def __optim(loss, net, optimizer):
-            loss.backward();
-            torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm = 0.5);
-            self._set_shared_grads();
-            optimizer.step();
         if optimizer is None:
             optimizer = self.optimizer;
         if not self.is_asyn:
-            __optim(loss, net, optimizer);
+            self._suboptim_net(loss, net, optimizer);
         else:
             with glb_var.get_value('lock'):
-                __optim(loss, net, optimizer);
+                self._suboptim_net(loss, net, optimizer);
 
     def _train_main(self, batch, advs, v_tgts):
         ''''''

@@ -3,7 +3,7 @@
 # @Email  : darrius.lei@outlook.com
 from agent.algorithm.actor_critic import ActorCritic
 from lib import glb_var, callback
-import torch
+import kfac
 
 logger = glb_var.get_value('log')
 
@@ -17,26 +17,15 @@ class Acktr(ActorCritic):
             logger.error(f'Acktr use nstep to calculate advantages, but no nstep is set.');
             raise callback.CustomException('CfgError');
 
-    def _cal_fisher_mat(self, batch):
+    def init_net(self, net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch, optimizer=None):
+        super().init_net(net_cfg, optim_cfg, lr_schedule_cfg, in_dim, out_dim, max_epoch, optimizer)
         if self.is_ac_shared:
-            net = self.acnet;
+            assert isinstance(self.optimizer, kfac.KfacOptimizer), f'The optimizer of [ACKTR] uses [KFAC].'
         else:
-            net = self.acnets[0];
-        action_logits = self._cal_action_pd(batch['states']);
-        action_pd = torch.distributions.Categorical(logits = action_logits);
-        #[batch]
-        log_probs = action_pd.log_prob(batch['actions']);
-        #[batch]
-        grads = torch.autograd.grad(log_probs.mean(), net.parameters());
-        fisher_mat = torch.outer(grads, grads);
-        return fisher_mat;
-
-
-
-    def compute_fisher_matrix(self, states, actions):
-        log_probs, _ = self.actor_critic(states)
-        log_probs = log_probs.gather(1, actions)
-        grads = torch.autograd.grad(log_probs.mean(), self.actor_critic.parameters())
-        grads = torch.cat([grad.view(-1) for grad in grads])
-        fisher_matrix = torch.outer(grads, grads)
-        return fisher_matrix
+            assert isinstance(self.optimizers[0], kfac.KfacOptimizer), f'The optimizer of [ACKTR] uses [KFAC].'
+            assert isinstance(self.optimizers[1], kfac.KfacOptimizer), f'The optimizer of [ACKTR] uses [KFAC].'
+    
+    def _suboptim_net(self, loss, net, optimizer):
+        ''''''
+        super()._suboptim_net(loss, net, optimizer);
+        optimizer.prepare();

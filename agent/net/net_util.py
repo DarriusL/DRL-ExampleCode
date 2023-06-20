@@ -1,7 +1,7 @@
 # @Time   : 2023.05.15
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
-import torch, math
+import torch, math, kfac
 from lib import callback, glb_var, util
 from agent.net import *
 
@@ -36,6 +36,8 @@ def get_optimizer(optim_cfg, net):
         return torch.optim.AdamW(net.parameters(), lr = optim_cfg['lr'], betas = optim_cfg['betas'], weight_decay = optim_cfg['weight_decay']);
     elif optim_cfg['name'].lower() == 'rmsprop':
         return torch.optim.RMSprop(net.parameters(), lr = optim_cfg['lr'], alpha = optim_cfg['alpha'], weight_decay = optim_cfg['weight_decay']);
+    elif optim_cfg['name'].lower() == 'kfac':
+        return kfac.KfacOptimizer(net.parameters(), lr = optim_cfg['lr'], weight_decay = optim_cfg['weight_decay']);
     else:
         logger.warning(f"Unrecognized optimizer[{optim_cfg['name']}], set default Adam optimizer");
         return torch.optim.Adam(net.parameters(), lr = optim_cfg['lr']);
