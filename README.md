@@ -167,6 +167,16 @@ python executor.py -cfg='./config/a3c/a3c_unshared_gae_cartpole_onbatch.json' --
 python executor.py -cfg='./cache/data/a3c/cartpole/shared_nstep_t100000/config.json' --mode='test'
 ```
 
+- acktr
+
+The effect is poor, and it will be improved in the future.
+
+```shell
+python executor.py -cfg='./config/acktr/acktr_shared_nstep_cartpole_onbatch.json' --mode='train'
+```
+
+
+
 
 
 ## Refrence

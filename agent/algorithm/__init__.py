@@ -3,6 +3,7 @@ from agent.algorithm.sarsa import Sarsa
 from agent.algorithm.dqn import *
 from agent.algorithm.actor_critic import ActorCritic
 from agent.algorithm import ppo
+from agent.algorithm.acktr import Acktr
 from agent import algorithm
 from lib import callback, glb_var
 
@@ -32,6 +33,8 @@ def get_alg(alg_cfg):
             alg = ppo.Reinforce(alg_cfg);
         elif alg_cfg['name'].lower() in ['ppo_a2c', 'ppo_a3c']:
             alg = ppo.ActorCritic(alg_cfg);
+        elif alg_cfg['name'].lower() == 'acktr':
+            alg = Acktr(alg_cfg);
         else:
             logger.error(f'Type of algorithm [{alg_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');
