@@ -139,10 +139,12 @@ class OnPolicySystem(System):
             self.train_mode();
             #collect experiences
             self._explore();
-            #start to train
-            self._train_epoch(epoch);
-            #algorithm update
-            self.agent.algorithm.update();
+            #check for off policy algorithm
+            if self._check_train_point(epoch):
+                #start to train
+                self._train_epoch(epoch);
+                #algorithm update
+                self.agent.algorithm.update();
             #valid mode
             if self._check_valid_point(epoch):
                 if self._valid_epoch(epoch):

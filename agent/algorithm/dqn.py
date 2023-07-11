@@ -38,7 +38,7 @@ class DQN(Sarsa):
         glb_var.get_value('var_reporter').add('Tau', self.var);
         if self.lr_schedule is not None:
             self.lr_schedule.step();
-            glb_var.get_value('var_reporter').add('lr', self.agent.algorithm.optimizer.param_groups[0]["lr"])
+            glb_var.get_value('var_reporter').add('lr', self.optimizer.param_groups[0]["lr"])
 
     def _cal_loss(self, batch):
         '''Calculate MSELoss for DQN'''
@@ -73,7 +73,7 @@ class DQN(Sarsa):
         batch:dict
             Convert through batch_to_tensor before passing in
         '''
-        loss = self.cal_loss(batch);
+        loss = self._cal_loss(batch);
         self.optimizer.zero_grad();
         self._check_nan(loss);
         loss.backward();

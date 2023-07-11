@@ -12,6 +12,7 @@ class Main_Body:
     env: None
     total_reward:None
     t:None
+    is_terminated:None
 
 class OpenaiEnv(Env):
     '''the openai environment
@@ -37,7 +38,7 @@ class OpenaiEnv(Env):
         self.train_env_data = None;
         total_reward = 0;
         t = 0;
-        self.main_body = Main_Body(env, total_reward, t);
+        self.main_body = Main_Body(env, total_reward, t, False);
     
     def get_state_and_action_dim(self):
         '''(state_dim, action_choice)
@@ -54,7 +55,7 @@ class OpenaiEnv(Env):
 
     def is_terminated(self):
         '''Is the current environment terminated'''
-        return True if self.main_body.env.steps_beyond_terminated is not None else False;
+        return self.main_body.is_terminated;
 
     def _save_train_env(self):
         '''Save the training environment for recovery'''
@@ -68,7 +69,7 @@ class OpenaiEnv(Env):
     def train(self):
         '''set train mode
         '''
-        if (not self.is_training):
+        if not self.is_training:
             self.is_training = True;
             if glb_var.get_value('mode') == 'train':
                 self._resume_train_env();
@@ -90,16 +91,20 @@ class OpenaiEnv(Env):
         '''Reset the env'''
         self.main_body.total_reward = 0;
         self.main_body.t = 0;
+        self.main_body.is_terminated = False;
         state, _ = self.main_body.env.reset();
         return state;
 
     def step(self, action):
         '''Change the env through the action'''
+        if self.main_body.is_terminated:
+            raise RuntimeError
         self.main_body.t += 1;
         next_state, reward, done, info1, info2 = self.main_body.env.step(action);
         self.main_body.total_reward += reward;
         if self.main_body.t == self.survival_T:
             done = True;
+        self.main_body.is_terminated = done;
         return next_state, reward, done, info1, info2;
 
     def render(self):

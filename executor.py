@@ -5,7 +5,6 @@ import os, logging, argparse
 from lib import glb_var, callback
 from lib.callback import Logger
 
-#TODO:Add: A mode that can be trained on existing models
 #TODO:Notes on each algorithm
 #TODO:Add algorithm:https://openai.com/research/openai-baselines-acktr-a2c
 #TODO:a3c gpu
