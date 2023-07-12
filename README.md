@@ -112,6 +112,8 @@ python executor.py -cfg='./config/reinforce/reinforce_cartpole_mc.json' --mode='
 python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./config/reinforce/reinforce_entropyreg_cartpole_onbatch.json' --mode='train'
 python executor.py -cfg='./cache/data/reinforce/cartpole/[-opt-]/config.json' --mode='test'
+
+python executor.py -cfg='./config/reinforce/reinforce_mountaincar_mc.json' --mode='train'
 ```
 
 - sarsa
@@ -131,6 +133,8 @@ python executor.py -cfg='./config/dqn/dqn_cartpole_off.json' --mode='train'
 python executor.py -cfg='./config/dqn/targetdqn_cartpole_off.json' --mode='train'
 python executor.py -cfg='./config/dqn/doubledqn_cartpole_off.json' --mode='train'
 python executor.py -cfg='./config/dqn/doubledqn_cartpole_per.json' --mode='train'
+
+python executor.py -cfg='./config/dqn/dqn_mountaincar_off.json' --mode='train'
 ```
 
 - a2c
@@ -141,6 +145,8 @@ python executor.py -cfg='./config/a2c/a2c_shared_nstep_cartpole_onbatch.json' --
 python executor.py -cfg='./config/a2c/a2c_shared_mc_cartpole_mc.json' --mode='train'
 python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --mode='train'
 python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
+
+python executor.py -cfg='./config/a2c/a2c_shared_nstep_mountaincar_onbatch.json' --mode='train'
 ```
 
 - ppo

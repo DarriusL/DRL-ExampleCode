@@ -117,7 +117,7 @@ def get_activation_fn(name = 'selu'):
                                         f'please replace or add the code yourself.\nSupport list:{activations}');
         raise callback.CustomException('ActivationCfgNameError');
 
-def get_mlpnet(hid_layers, activation_fn, in_dim, out_dim):
+def get_mlp_net(hid_layers, activation_fn, in_dim, out_dim):
     ''''''
     if len(hid_layers) > 1:
         layers = [
@@ -137,6 +137,29 @@ def get_mlpnet(hid_layers, activation_fn, in_dim, out_dim):
             torch.nn.Linear(hid_layers[0], out_dim)
         ]
     return torch.nn.Sequential(*layers);
+
+def get_conv2d_net(in_channel, conv_hid_layers, activation_fn, batch_norm = False):
+    '''
+    Parameters:
+    -----------
+    channel_in:int
+        the channel of th input imag data
+
+    conv_hid_layers:list
+        parameters of the conv2d input: [out_channel, kernel, stride, padding, dialation]
+    
+    activation_fn: 
+        activation function
+    '''
+    conv_layers = []; 
+    for i, layer in enumerate(conv_hid_layers):
+        conv_layers.append(torch.nn.Conv2d(in_channel, *layer));
+        conv_layers.append(activation_fn);
+        if batch_norm and i != len(conv_hid_layers) - 1:
+            conv_layers.append(torch.nn.BatchNorm2d(layer[0]));
+        in_channel = layer[0];
+    return torch.nn.Sequential(*conv_layers);
+
 
 def net_param_copy(src, tgt):
     '''Copy network parameters from src to tgt'''

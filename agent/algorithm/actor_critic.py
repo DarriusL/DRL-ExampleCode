@@ -222,6 +222,8 @@ class ActorCritic(Reinforce):
         with torch.no_grad():
             v_preds = self._cal_v(batch['states']);
             advs, v_tgts = self._cal_advs_and_v_tgts(batch, v_preds);
+        if self.rets_mean_baseline:
+            advs = alg_util.rets_mean_baseline(advs);
         self._train_main(batch, advs, v_tgts);
     
     def _suboptim_net(self, loss, net, optimizer):

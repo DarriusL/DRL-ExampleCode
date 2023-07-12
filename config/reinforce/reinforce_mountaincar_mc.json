@@ -1,0 +1,47 @@
+{
+    "agent_cfg":{
+        "algorithm_cfg":{
+            "name":"reinforce",
+            "var_schedule_cfg":null,
+            "gamma":0.99,
+            "rets_mean_baseline":true,
+            "policy_loss_var":1,
+            "entropy_reg_var_cfg":null
+        },
+        "net_cfg":{
+            "name":"MLPNet",
+            "hid_layers":[32, 16],
+            "hid_layers_activation":"Selu"
+        },
+        "optimizer_cfg":{
+            "name":"Adam",
+            "lr":1e-2,
+            "weight_decay": 1e-08,
+            "betas": [
+                0.9,
+                0.999
+            ]
+        },
+        "lr_schedule_cfg":null,
+        "memory_cfg":{
+            "name":"OnPolicy"
+        },
+        "explore_times_per_train":1,
+        "train_exp_size":1,
+        "batch_learn_times_per_train":4,
+        "max_epoch":10000
+    },
+    "env":{
+        "name":"MountainCar",
+        "solved_total_reward":-100,
+        "finish_total_reward":-80,
+        "survival_T":5000
+    },
+    "model_path":null,
+    "is_gpu_available":true,
+    "valid":{
+        "valid_step":10,
+        "valid_times":5,
+        "not_improve_finish_step":5
+    }
+}
