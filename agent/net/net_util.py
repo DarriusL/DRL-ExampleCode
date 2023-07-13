@@ -128,13 +128,20 @@ def get_mlp_net(hid_layers, activation_fn, in_dim, out_dim):
             activation_fn,
             torch.nn.Linear(hid_layers[-1], out_dim)    
         ];
-    else:
-        #len(.)==1
+    elif len(hid_layers) == 1:
         layers = [
             torch.nn.Linear(in_dim, hid_layers[0]),
             torch.nn.Dropout(glb_var.get_value('dropout_rate')),
             activation_fn,
             torch.nn.Linear(hid_layers[0], out_dim)
+        ]
+    else:
+        #len()==0
+        layers = [
+            torch.nn.Linear(in_dim, out_dim),
+            torch.nn.Dropout(glb_var.get_value('dropout_rate')),
+            activation_fn,
+            torch.nn.Linear(out_dim, out_dim)
         ]
     return torch.nn.Sequential(*layers);
 
