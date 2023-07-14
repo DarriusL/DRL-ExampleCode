@@ -17,7 +17,7 @@ class ConvNet(Net):
     in_dim: list 
         dimension of the input:[c, h, w]
     
-    out_dim:int
+    out_dim: list
      dimension of the output
 
     
@@ -27,7 +27,7 @@ class ConvNet(Net):
     "net_cfg":{
         "name":"ConvNet",
         "conv_hid_layers":[
-            [32,  8, 4, 0, 1],
+            [32, 8, 4, 0, 1],
             [32, 4, 2, 0, 1]
         ],
         "fc_hid_layers":[512],
@@ -39,6 +39,7 @@ class ConvNet(Net):
     '''
     def __init__(self, net_cfg, in_dim, out_dim) -> None:
         super().__init__(net_cfg);
+        self.in_dim = in_dim;
         self.body = net_util.get_conv2d_net(
             in_channel = in_dim[0], 
             conv_hid_layers = self.conv_hid_layers, 
@@ -50,7 +51,7 @@ class ConvNet(Net):
                 hid_layers = self.fc_hid_layers,
                 activation_fn = net_util.get_activation_fn(self.out_layer_activation),
                 in_dim = conv_out_dim,
-                out_dim = out_dim);
+                out_dim = out_dim[0]);
         else:
             tails = [];
             for out_d in out_dim:
