@@ -17,6 +17,12 @@ def _make_env(env_cfg):
             return gym.make("MountainCar-v0").env;
         else:
             return gym.make("MountainCar-v0", render_mode="human").env;
+    elif env_cfg['name'].lower() == 'pong':
+        if glb_var.get_value('mode') == 'train':
+            env = gym.make('Pong-v4');
+        else:
+            env = gym.make('Pong-v4', render_mode="human");
+        return gym.wrappers.TimeLimit(env, max_episode_steps=1000);
     else:
         logger.error(f'Type of env [{env_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
         raise callback.CustomException('NetCfgTypeError');
