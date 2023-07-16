@@ -10,10 +10,13 @@ from lib import glb_var
 @dataclass
 class Main_Body:
     env: None
+    state: None
     total_reward:None
     t:None
     is_terminated:None
 
+image_envs = ['pong'];
+#TODO:a new verison
 class OpenaiEnv(Env):
     '''the openai environment
     
@@ -40,14 +43,21 @@ class OpenaiEnv(Env):
         t = 0;
         self.main_body = Main_Body(env, total_reward, t, False);
     
+    def _transpose(self, state):
+        return state.transpose((2, 0, 1));
+    
     def get_state_and_action_dim(self):
         '''(state_dim, action_choice)
         '''
-        return self.main_body.env.observation_space.shape[0], self.main_body.env.action_space.n;
+        if self.name.lower() in image_envs:
+            state_dim = self._transpose(self.main_body.env.reset()[0]).shape;
+        else:
+            state_dim = self.main_body.env.observation_space.shape[0];
+        return state_dim, self.main_body.env.action_space.n;
 
     def get_state(self):
         '''get the current state'''
-        return np.asarray(self.main_body.env.state, dtype=np.float32);
+        return np.asarray(self.main_body.state, dtype=np.float32);
 
     def get_total_reward(self):
         '''Get the total rewards of the current trajectory so far'''
@@ -93,6 +103,9 @@ class OpenaiEnv(Env):
         self.main_body.t = 0;
         self.main_body.is_terminated = False;
         state, _ = self.main_body.env.reset();
+        if self.name.lower() in image_envs:
+            state = self._transpose(state);
+        self.main_body.state = state;
         return state;
 
     def step(self, action):
@@ -101,6 +114,9 @@ class OpenaiEnv(Env):
             raise RuntimeError
         self.main_body.t += 1;
         next_state, reward, done, info1, info2 = self.main_body.env.step(action);
+        if self.name.lower() in image_envs:
+            next_state = self._transpose(next_state);
+        self.main_body.state = next_state;
         self.main_body.total_reward += reward;
         if self.main_body.t == self.survival_T:
             done = True;
