@@ -46,12 +46,13 @@ class ConvNet(Net):
             activation_fn = net_util.get_activation_fn(self.hid_layers_activation), 
             batch_norm = self.batch_norm);
         conv_out_dim = self._get_conv_out_dim();
-        if len(out_dim) == 1:
+        #
+        if isinstance(out_dim, int):
             self.tail = net_util.get_mlp_net(
                 hid_layers = self.fc_hid_layers,
                 activation_fn = net_util.get_activation_fn(self.out_layer_activation),
                 in_dim = conv_out_dim,
-                out_dim = out_dim[0]);
+                out_dim = out_dim);
         else:
             tails = [];
             for out_d in out_dim:
@@ -77,6 +78,9 @@ class ConvNet(Net):
         '''
         x:[b, c, h, w]
         '''
+        if len(x.shape) == 3:
+            #set batch to 1
+            x = x.unsqueeze(0);
         if self.normalize:
             x = x/255;
         y_conv = self.body(x).reshape(x.shape[0], -1);

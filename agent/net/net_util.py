@@ -183,8 +183,7 @@ class NetUpdater():
         elif self.name.lower() == 'polyak':
             self.updater = self.net_param_polyak_update;
         else:
-            logger.error(f'Unsupported type {self.name}, '
-                                              'implement it yourself or replace it with [replace, polyak]');
+            logger.error(f'Unsupported type {self.name}, implement it yourself or replace it with [replace, polyak]');
 
     def set_net(self, src, tgt):
         ''''''

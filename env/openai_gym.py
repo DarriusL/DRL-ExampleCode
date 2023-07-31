@@ -16,7 +16,7 @@ class Main_Body:
     is_terminated:None
 
 image_envs = ['pong'];
-#TODO:a new verison
+#TODO:code a new verison
 class OpenaiEnv(Env):
     '''the openai environment
     
@@ -37,11 +37,13 @@ class OpenaiEnv(Env):
     def __init__(self, env_cfg) -> None:
         super().__init__(env_cfg);
         env = _make_env(env_cfg);
-        env.reset();
+        state, _ = env.reset();
+        if self.name.lower() in image_envs:
+            state = self._transpose(state);
         self.train_env_data = None;
         total_reward = 0;
         t = 0;
-        self.main_body = Main_Body(env, total_reward, t, False);
+        self.main_body = Main_Body(env, state, total_reward, t, False);
     
     def _transpose(self, state):
         return state.transpose((2, 0, 1));
@@ -50,7 +52,7 @@ class OpenaiEnv(Env):
         '''(state_dim, action_choice)
         '''
         if self.name.lower() in image_envs:
-            state_dim = self._transpose(self.main_body.env.reset()[0]).shape;
+            state_dim = self.main_body.state.shape;
         else:
             state_dim = self.main_body.env.observation_space.shape[0];
         return state_dim, self.main_body.env.action_space.n;

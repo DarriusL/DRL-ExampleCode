@@ -2,7 +2,7 @@
 # @Author : Darrius Lei
 # @Email  : darrius.lei@outlook.com
 from agent.net.mlp import *
-from agent import net
+from agent.net.conv import *
 from agent.net import net_util
 from lib import callback
 import torch
@@ -40,6 +40,7 @@ def get_net(net_cfg, in_dim, out_dim, device = torch.device("cpu")):
         return nets;
 
     try:
+        from agent import net
         NetClass = getattr(net, net_cfg['name']);
         return NetClass(net_cfg, in_dim, out_dim).to(device);
     except:
@@ -47,6 +48,8 @@ def get_net(net_cfg, in_dim, out_dim, device = torch.device("cpu")):
             net = MLPNet(net_cfg, in_dim, out_dim);
         elif net_cfg['name'].lower() == 'sharedmlpnet':
             net = SharedMLPNet(net_cfg, in_dim, out_dim);
+        elif net_cfg['name'].lower() == 'convnet':
+            net = ConvNet(net_cfg, in_dim, out_dim);
         else:
             logger.error(f'Type of net [{net_cfg["name"]}] is not supported.\nPlease replace or add by yourself.')
             raise callback.CustomException('NetCfgTypeError');
