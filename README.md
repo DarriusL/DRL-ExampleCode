@@ -147,6 +147,8 @@ python executor.py -cfg='./config/a2c/a2c_unshared_gae_cartpole_onbatch.json' --
 python executor.py -cfg='./cache/data/a2c/cartpole/[-opt-]/config.json' --mode='test'
 
 python executor.py -cfg='./config/a2c/a2c_shared_nstep_mountaincar_onbatch.json' --mode='train'
+
+python executor.py -cfg='./config/a2c/a2c_unshared_gae_pong_onbatch.json' --mode='train'
 ```
 
 - ppo
